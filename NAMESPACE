@@ -1,0 +1,10 @@
+# NAMESPACE for the R package 'missForest'
+# Created 2012-02-20 by D. Stekhoven
+
+# Export all names
+exportPattern(".")
+
+# Import all packages listed as Imports or Depends
+import(
+  randomForest
+)

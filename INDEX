@@ -1,0 +1,8 @@
+missForest              Nonparametric Missing Value Imputation using
+                        Random Forest
+missForest-package      Nonparametric Missing Value Imputation using
+                        Random Forest
+mixError                Compute Imputation Error for Mixed-type Data
+nrmse                   Normalized Root Mean Squared Error
+prodNA                  Introduce Missing Values Completely at Random
+varClass                Extract Variable Types from a Dataframe
