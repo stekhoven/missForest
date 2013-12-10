@@ -21,7 +21,7 @@ Type 'q()' to quit R.
 > ## Created: 13.05.2011                                  Package: missForest
 > library(missForest)
 Loading required package: randomForest
-randomForest 4.6-6
+randomForest 4.6-7
 Type rfNews() to see new features/changes/bug fixes.
 > set.seed(119)
 > X1 <- rep(c(4, 3, 2, 1), each = 25)
