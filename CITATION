@@ -1,0 +1,32 @@
+citHeader("To cite package 'missForest' or its original article in publications use:")
+
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
+vers <- paste("R package version", meta$Version)
+
+citEntry(entry = "Manual",
+         title = "missForest: Nonparametric Missing Value Imputation using Random Forest",
+         author = as.person("Daniel J. Stekhoven"),
+         year = year,
+         note = vers,
+
+         textVersion =
+         paste0("Daniel J. Stekhoven (",
+                year,
+                "). missForest: Nonparametric Missing Value Imputation using Random Forest. ",
+                vers, "."))
+
+citEntry(entry = "Article",
+         title = "MissForest - non-parametric missing value imputation for mixed-type data",
+         author = personList(as.person("Daniel J. Stekhoven"),
+                             as.person("Peter Buehlmann")),
+		 journal = "Bioinformatics",
+		 volume = "28",
+		 number = "1",
+		 pages = "112--118",
+         year = "2012",
+         publisher = "Oxford Univ Press",
+
+         textVersion =
+         paste("Stekhoven D. J., & Buehlmann, P. (2012).",
+			   "MissForest - non-parametric missing value imputation for mixed-type data.",
+			   "Bioinformatics, 28(1), 112-118."))
