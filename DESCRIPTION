@@ -1,8 +1,8 @@
 Package: missForest
 Type: Package
 Title: Nonparametric Missing Value Imputation using Random Forest
-Version: 1.3-1
-Date: 2013-12-10
+Version: 1.4
+Date: 2013-12-30
 Author: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Depends: randomForest
@@ -13,6 +13,7 @@ Description: The function 'missForest' in this package is used to
         impute continuous and/or categorical data including complex
         interactions and non-linear relations. It yields an out-of-bag
         (OOB) imputation error estimate without the need of a test set
-        or elaborate cross-validation.
+        or elaborate cross-validation. It can be run in parallel to 
+        save computation time.
 License: GPL (>= 2)
 URL: http://www.r-project.org, https://github.com/stekhoven/missForest
