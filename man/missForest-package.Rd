@@ -8,14 +8,15 @@ Nonparametric Missing Value Imputation using Random Forest
   'missForest' is used to impute missing values particularly in the case
   of mixed-type data. It can be used to impute continuous and/or
   categorical data including complex interactions and nonlinear
-  relations. It yields an out-of-bag (OOB) imputation error estimate.
+  relations. It yields an out-of-bag (OOB) imputation error estimate. 
+  Moreover, it can be run parallel to save computation time.
 }
 \details{
 \tabular{ll}{
 Package: \tab missForest\cr
 Type: \tab Package\cr
-Version: \tab 1.3\cr
-Date: \tab 2012-06-26\cr
+Version: \tab 1.4\cr
+Date: \tab 2013-12-30\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -24,7 +25,7 @@ nonparametric missing value imputation. See \code{\link{missForest}} for more
 details.
 }
 \author{
-  Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
+  Daniel J. Stekhoven, \email{stekhoven@stat.math.ethz.ch}
 }
 \references{Stekhoven, D.J. and Buehlmann, P. (2012), 'MissForest -
   nonparametric missing value imputation for mixed-type data',
