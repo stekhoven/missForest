@@ -8,7 +8,7 @@
 ## Acknowledgement: Steve Weston for input regarding parallel execution (2012)
 ##############################################################################
 
-missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
+missForest2 <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        decreasing = FALSE, verbose = FALSE,
                        mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
@@ -39,7 +39,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ##
   ## ----------------------------------------------------------------------
   ## Author: Daniel Stekhoven, stekhoven@stat.math.ethz.ch
-
+  
   ## stop in case of wrong inputs passed to randomForest
   n <- nrow(xmis)
   p <- ncol(xmis)
@@ -51,7 +51,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     stopifnot(length(strata) == p, typeof(strata) == 'list')
   if (!is.null(nodesize))
     stopifnot(length(nodesize) == 2)
-
+  
   ## remove completely missing variables
   if (any(apply(is.na(xmis), 2, sum) == n)){
     indCmis <- which(apply(is.na(xmis), 2, sum) == n)
@@ -65,8 +65,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   parallelize <- match.arg(parallelize)
   if (parallelize %in% c('columns', 'forests')) {
     if (getDoParWorkers() == 1) {
-      warning("You must register a 'foreach' parallel backend to run 'missForest' in parallel.")
-      parallelize <- 'no'
+      stop("You must register a 'foreach' parallel backend to run 'missForest' in parallel. Set 'parallelize' to 'no' to compute serially.")
     } else if (verbose) {
       if (parallelize == 'columns') {
         cat("  parallelizing over the columns of the input data matrix 'xmis'\n")
@@ -79,7 +78,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     }
   }
   
-  ## perform initial guess on xmis (mean imputation)
+  ## perform initial S.W.A.G. on xmis (mean imputation)
   ximp <- xmis
   xAttrib <- lapply(xmis, attributes)
   varType <- character(p)
@@ -99,7 +98,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       } else {
         while (class.assign == "NA's"){
           class.assign <- sample(names(which(max.level ==
-                                             summary(ximp[,t.co]))), 1)
+                                               summary(ximp[,t.co]))), 1)
         }
         ximp[is.na(xmis[,t.co]),t.co] <- class.assign
       }
@@ -124,7 +123,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     '%cols%' <- get('%do%')
     idxList <- nzsort.j
   }
-   
+  
   ## output
   Ximp <- vector('list', maxiter)
   
@@ -135,7 +134,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   convOld <- rep(Inf, k)
   OOBerror <- numeric(p)
   names(OOBerror) <- varType
-
+  
   ## setup convergence variables w.r.t. variable types
   if (k == 1){
     if (unique(varType) == 'numeric'){
@@ -150,17 +149,17 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     convergence <- matrix(NA, ncol = 2)
     OOBerr <- numeric(2)
   }
-
+  
   ## function to yield the stopping criterion in the following 'while' loop
   stopCriterion <- function(varType, convNew, convOld, iter, maxiter){
     k <- length(unique(varType))
     if (k == 1){
-        (convNew < convOld) & (iter < maxiter)
+      (convNew < convOld) & (iter < maxiter)
     } else {
       ((convNew[1] < convOld[1]) | (convNew[2] < convOld[2])) & (iter < maxiter)
     }
   }
-
+  
   ## iterate missForest
   while (stopCriterion(varType, convNew, convOld, iter, maxiter)){
     if (iter != 0){
@@ -170,9 +169,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     cat("  missForest iteration", iter+1, "in progress...")
     t.start <- proc.time()
     ximp.old <- ximp
-    for (s in 1:p){
-      varInd <- sort.j[s]
-      if (noNAvar[[varInd]] != 0){
+    
+    for (idx in idxList) {
+      results <- foreach(varInd=idx, .packages='randomForest') %cols% {
         obsi <- !NAloc[,varInd] # which i's are observed
         misi <- NAloc[,varInd] # which i's are missing
         obsY <- ximp[obsi, varInd] # training response
@@ -181,55 +180,107 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         typeY <- varType[varInd]
         if (typeY == 'numeric'){
           ## train random forest on observed data
-          RF <- randomForest(
-                  x = obsX,
-                  y = obsY,
-                  ntree = ntree,
-                  mtry = mtry,
-                  replace = replace,
-                  sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                    if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
-                  nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
-                  maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
-          ## record out-of-bag error
-          OOBerror[varInd] <- RF$mse[ntree]
+          if (parallelize == 'forests') {
+            RF <- foreach(xntree=idiv(ntree, chunks=getDoParWorkers()),
+                          .combine='combine', .multicombine=TRUE,
+                          .packages='randomForest') %dopar% {
+                            randomForest(
+                              x = obsX,
+                              y = obsY,
+                              ntree = xntree,
+                              mtry = mtry,
+                              replace = replace,
+                              sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                                if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                              nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
+                              maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
+                          }
+            ## record out-of-bag error
+            oerr <- mean((predict(RF) - RF$y) ^ 2, na.rm=TRUE)
+          } else {
+            RF <- randomForest(
+              x = obsX,
+              y = obsY,
+              ntree = ntree,
+              mtry = mtry,
+              replace = replace,
+              sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+              nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
+              maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
+            ## record out-of-bag error
+            oerr <- RF$mse[ntree]
+          }
           ## predict missing values in column varInd
           misY <- predict(RF, misX)
         } else { # if Y is categorical          
           obsY <- factor(obsY) ## remove empty classes
           summarY <- summary(obsY)
           if (length(summarY) == 1){ ## if there is only one level left
-            misY <- factor(rep(names(summarY), sum(misi)))
+            oerr <- 0
+            misY <- factor(rep(names(summarY), length(misi)))
           } else {
             ## train random forest on observed data
-            RF <- randomForest(
-                    x = obsX,
-                    y = obsY,
-                    ntree = ntree,
-                    mtry = mtry,
-                    replace = replace,
-                    classwt = if (!is.null(classwt)) classwt[[varInd]] else
-                              rep(1, nlevels(obsY)),
-                    cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
-                             rep(1/nlevels(obsY), nlevels(obsY)),
-                    strata = if (!is.null(strata)) strata[[varInd]] else obsY,
-                    sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                           if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
-                    nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
-                    maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
-            ## record out-of-bag error
-            OOBerror[varInd] <- RF$err.rate[[ntree,1]]
+            if (parallelize == 'forests') {
+              RF <- foreach(xntree=idiv(ntree, chunks=getDoParWorkers()),
+                            .combine='combine', .multicombine=TRUE,
+                            .packages='randomForest') %dopar% {
+                              randomForest(
+                                x = obsX,
+                                y = obsY,
+                                ntree = xntree,
+                                mtry = mtry,
+                                replace = replace,
+                                classwt = if (!is.null(classwt)) classwt[[varInd]] else
+                                  rep(1, nlevels(obsY)),
+                                cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
+                                  rep(1/nlevels(obsY), nlevels(obsY)),
+                                strata = if (!is.null(strata)) strata[[varInd]] else obsY,
+                                sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                                  if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                                nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
+                                maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
+                            }
+              ## record out-of-bag error
+              ne <- as.integer(predict(RF)) != as.integer(RF$y)
+              ne <- ne[! is.na(ne)]
+              oerr <- sum(ne) / length(ne)
+            } else {
+              RF <- randomForest(
+                x = obsX,
+                y = obsY,
+                ntree = ntree,
+                mtry = mtry,
+                replace = replace,
+                classwt = if (!is.null(classwt)) classwt[[varInd]] else
+                  rep(1, nlevels(obsY)),
+                cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
+                  rep(1/nlevels(obsY), nlevels(obsY)),
+                strata = if (!is.null(strata)) strata[[varInd]] else obsY,
+                sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                  if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
+                maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
+              ## record out-of-bag error
+              oerr <- RF$err.rate[[ntree,1]]
+            }
             ## predict missing values in column varInd
             misY <- predict(RF, misX)
           }
         }
         
-        ## replace old imputed value with prediction
-        ximp[misi, varInd] <- misY
+        list(varInd=varInd, misY=misY, oerr=oerr)
+      }
+      
+      ## update the master's copy of the data
+      for (res in results) {
+        misi <- NAloc[,res$varInd]
+        ximp[misi, res$varInd] <- res$misY
+        OOBerror[res$varInd] <- res$oerr
       }
     }
     cat('done!\n')
-
+    
     iter <- iter+1
     Ximp[[iter]] <- ximp
     
@@ -245,12 +296,12 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       }
       t.co2 <- t.co2 + 1
     }
-
+    
     ## compute estimated imputation error
     if (!variablewise){
       NRMSE <- sqrt(mean(OOBerror[varType=='numeric'])/
-                    var(as.vector(as.matrix(xmis[,varType=='numeric'])),
-                        na.rm = TRUE))
+                      var(as.vector(as.matrix(xmis[,varType=='numeric'])),
+                          na.rm = TRUE))
       PFC <- mean(OOBerror[varType=='factor'])
       if (k==1){
         if (unique(varType)=='numeric'){
@@ -269,9 +320,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       names(OOBerr)[varType=='numeric'] <- 'MSE'
       names(OOBerr)[varType=='factor'] <- 'PFC'
     }
-
+    
     if (any(!is.na(xtrue))){
-        err <- suppressWarnings(mixError(ximp, xmis, xtrue))
+      err <- suppressWarnings(mixError(ximp, xmis, xtrue))
     }
     
     ## return status output, if desired
@@ -285,7 +336,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       cat("    time:", delta.start[3], "seconds\n\n")
     }
   }#end while((convNew<convOld)&(iter<maxiter)){
-
+  
   ## produce output w.r.t. stopping rule
   if (iter == maxiter){
     if (any(is.na(xtrue))){
@@ -298,7 +349,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       out <- list(ximp = Ximp[[iter-1]], OOBerror = OOBerrOld)
     } else {
       out <- list(ximp = Ximp[[iter-1]], OOBerror = OOBerrOld,
-        error = suppressWarnings(mixError(Ximp[[iter-1]], xmis, xtrue)))
+                  error = suppressWarnings(mixError(Ximp[[iter-1]], xmis, xtrue)))
     }
   }
   class(out) <- 'missForest'
