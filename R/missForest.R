@@ -74,6 +74,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         cat("  parallelizing computation of the random forest model objects\n")
       }
     }
+    if (getDoParWorkers() > p){
+      stop('The number of parallel cores should not exceed the number of variables (p=', p, ")")
+    }
   }
   
   ## perform initial guess on xmis (mean imputation)
@@ -106,10 +109,21 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ## extract missingness pattern
   NAloc <- is.na(xmis)            # where are missings
   noNAvar <- apply(NAloc, 2, sum) # how many are missing in the vars
-  sort.j <- order(noNAvar) # indices of increasing amount of NA in vars
+  sort.j <- order(noNAvar)        # indices of increasing amount of NA in vars
   if (decreasing)
     sort.j <- rev(sort.j)
   sort.noNAvar <- noNAvar[sort.j]
+  
+  ## compute a list of column indices for each task
+  nzsort.j <- sort.j[sort.noNAvar > 0]
+  if (parallelize == 'columns') {
+    '%cols%' <- get('%dopar%')
+    idxList <- as.list(isplitVector(nzsort.j, chunkSize=getDoParWorkers()))
+  } else {
+    ## force column loop to be sequential
+    '%cols%' <- get('%do%')
+    idxList <- nzsort.j
+  }
    
   ## output
   Ximp <- vector('list', maxiter)
