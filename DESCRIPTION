@@ -2,7 +2,7 @@ Package: missForest
 Type: Package
 Title: Nonparametric Missing Value Imputation using Random Forest
 Version: 1.4
-Date: 2013-12-30
+Date: 2013-12-31
 Author: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Depends: randomForest,foreach,itertools
