@@ -10,8 +10,7 @@ innovations:
 
 - use of prediction 
 - 'real' multiple imputation 
-- parallelization capabilities  
 
-Contact me by email: stekhoven@gmail.com  References: Stekhoven, D.J. and Buehlmann, P. (2012), 
+Contact me by email: stekhoven@quantik.ch  References: Stekhoven, D.J. and Buehlmann, P. (2012), 
 'MissForest - nonparametric missing value imputation  for mixed-type data', Bioinformatics, 28(1) 2012, 
 112-118, doi: 10.1093/bioinformatics/btr597
