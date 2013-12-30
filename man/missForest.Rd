@@ -7,7 +7,8 @@
   'missForest' is used to impute missing values particularly in the case
   of mixed-type data. It can be used to impute continuous and/or
   categorical data including complex interactions and nonlinear
-  relations. It yields an out-of-bag (OOB) imputation error estimate.
+  relations. It yields an out-of-bag (OOB) imputation error estimate. 
+  Moreover, it can be run parallel to save computation time.
 }
 \usage{
 missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
@@ -15,7 +16,7 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
                        sampsize = NULL, nodesize = NULL, maxnodes = NULL,
-                       xtrue = NA)
+                       xtrue = NA, parallelize = c('no', 'columns', 'forests'))
 }
 \arguments{
   \item{xmis}{
@@ -87,6 +88,13 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     show the true imputation error after each iteration and the output
     will also contain the final true imputation error.
   }
+  \item{parallelize}{
+    should 'missForest' be run parallel. Default is 'no'. If 'columns'
+    the data is split into pieces of the size equal to the number of cores
+    registered in the parallel backend. If 'forests' the total number of trees in 
+    each random forests is split in the same way. Whether 'columns' or 'forests'
+    is more suitable, depends on the data. See Details.
+  }
 }
 \details{
   After each iteration the difference between the previous and the new
@@ -119,8 +127,20 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   with 'ntree'. In case of high-dimensional data we recommend using a
   small 'mtry' (e.g. 100 should work) to obtain an appropriate
   imputation result within a feasible amount of time.
+  
+  Using an appropriate backend 'missForest' can be run parallel. 
+  There are two possible ways to do this. One way is to create the random forest
+  object in parallel (parallelize = "forests"). This is most useful 
+  if a single forest object takes long to compute and there are not 
+  many variables in the data. The second way is to compute multiple random
+  forest classifiers parallel on different variables (parallelize = "variables").
+  This is most useful if the data contains many variables and computing 
+  the random forests is not taking too long. For details on how to register 
+  a parallel backend see for instance the documentation of 'doParallel').
 
   See the vignette for further examples on how to use missForest.
+  
+  I thank Steve Weston for his input regarding parallel computation of 'missForest'.
 }
 \value{
   \item{ximp}{

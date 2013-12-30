@@ -8,12 +8,12 @@
 ## Acknowledgement: Steve Weston for input regarding parallel execution (2012)
 ##############################################################################
 
-missForest2 <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
+missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        decreasing = FALSE, verbose = FALSE,
                        mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
                        sampsize = NULL, nodesize = NULL, maxnodes = NULL,
-                       xtrue = NA, parallelize = c('no', 'columns', 'forests'))
+                       xtrue = NA, parallelize = c('no', 'variables', 'forests'))
 { ## ----------------------------------------------------------------------
   ## Arguments:
   ## xmis         = data matrix with missing values
@@ -63,12 +63,12 @@ missForest2 <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   
   ## return feedback on parallelization setup
   parallelize <- match.arg(parallelize)
-  if (parallelize %in% c('columns', 'forests')) {
+  if (parallelize %in% c('variables', 'forests')) {
     if (getDoParWorkers() == 1) {
       stop("You must register a 'foreach' parallel backend to run 'missForest' in parallel. Set 'parallelize' to 'no' to compute serially.")
     } else if (verbose) {
-      if (parallelize == 'columns') {
-        cat("  parallelizing over the columns of the input data matrix 'xmis'\n")
+      if (parallelize == 'variables') {
+        cat("  parallelizing over the variables of the input data matrix 'xmis'\n")
       } else {
         cat("  parallelizing computation of the random forest model objects\n")
       }
@@ -115,7 +115,7 @@ missForest2 <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   
   ## compute a list of column indices for each task
   nzsort.j <- sort.j[sort.noNAvar > 0]
-  if (parallelize == 'columns') {
+  if (parallelize == 'variables') {
     '%cols%' <- get('%dopar%')
     idxList <- as.list(isplitVector(nzsort.j, chunkSize=getDoParWorkers()))
   } else {
