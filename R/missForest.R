@@ -4,6 +4,8 @@
 ## This R script contains the actual missForest function.
 ##
 ## Author: D.Stekhoven, stekhoven@stat.math.ethz.ch
+##
+## Acknowledgement: Steve Weston for input regarding parallel execution (2012)
 ##############################################################################
 
 missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
@@ -11,13 +13,13 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
                        sampsize = NULL, nodesize = NULL, maxnodes = NULL,
-                       xtrue = NA)
+                       xtrue = NA, parallelize = c('no', 'columns', 'forests'))
 { ## ----------------------------------------------------------------------
   ## Arguments:
   ## xmis         = data matrix with missing values
   ## maxiter      = stop after how many iterations (default = 10)
-  ## ntree        = how many trees are grown in the forest
-  ## variablewise = return OOB errors for each variable separately
+  ## ntree        = how many trees are grown in the forest (default = 100)
+  ## variablewise = (boolean) return OOB errors for each variable separately
   ## decreasing   = (boolean) if TRUE the columns are sorted with decreasing
   ##                amount of missing values
   ## verbose      = (boolean) if TRUE then missForest returns error estimates,
@@ -57,7 +59,22 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     p <- ncol(xmis)
     cat('  removed variable(s)', indCmis,
         'due to the missingness of all entries\n')
-  }  
+  } 
+  
+  ## return feedback on parallelization setup
+  parallelize <- match.arg(parallelize)
+  if (parallelize %in% c('columns', 'forests')) {
+    if (getDoParWorkers() == 1) {
+      warning("You must register a 'foreach' parallel backend to run 'missForest' in parallel.")
+      parallelize <- 'no'
+    } else if (verbose) {
+      if (parallelize == 'columns') {
+        cat("  parallelizing over the columns of the input data matrix 'xmis'\n")
+      } else {
+        cat("  parallelizing computation of the random forest model objects\n")
+      }
+    }
+  }
   
   ## perform initial guess on xmis (mean imputation)
   ximp <- xmis
