@@ -5,7 +5,7 @@ Version: 1.4
 Date: 2013-12-30
 Author: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
-Depends: randomForest
+Depends: randomForest,foreach,itertools
 Description: The function 'missForest' in this package is used to
         impute missing values particularly in the case of mixed-type
         data. It uses a random forest trained on the observed values of
