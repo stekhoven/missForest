@@ -16,7 +16,7 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
                        sampsize = NULL, nodesize = NULL, maxnodes = NULL,
-                       xtrue = NA, parallelize = c('no', 'columns', 'forests'))
+                       xtrue = NA, parallelize = c('no', 'variables', 'forests'))
 }
 \arguments{
   \item{xmis}{
@@ -89,10 +89,10 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     will also contain the final true imputation error.
   }
   \item{parallelize}{
-    should 'missForest' be run parallel. Default is 'no'. If 'columns'
+    should 'missForest' be run parallel. Default is 'no'. If 'variables'
     the data is split into pieces of the size equal to the number of cores
     registered in the parallel backend. If 'forests' the total number of trees in 
-    each random forests is split in the same way. Whether 'columns' or 'forests'
+    each random forests is split in the same way. Whether 'variables' or 'forests'
     is more suitable, depends on the data. See Details.
   }
 }

@@ -3,8 +3,8 @@
 %% missForest_1.3.Rnw updated on 22.06.12
 %% missForest_1.4.Rnw updated on 30.12.13
 \documentclass[11pt]{article}
-%\VignetteIndexEntry{missForest_1.4.Rnw}
-%\VignetteDepends{randomForest,doParallel,foreach,itertools}
+%\VignetteIndexEntry{missForest_1.4}
+%\VignetteDepends{missForest}
 \usepackage[english]{babel}
 \usepackage{Sweave,graphicx,amsmath,amssymb,url}
 \usepackage{natbib}
@@ -26,11 +26,8 @@
 
 %% Setting default R options
 <<label=setRopts, echo=FALSE>>=
-library(randomForest)
-library(foreach)
-library(doParallel)
-library(itertools)
-library(missForest)
+require(foreach)
+require(missForest)
 options(width=70, prompt="> ", continue="+ ")
 options(SweaveHooks=list(fig=function() par(mar=c(4,4,0.4,0.7)))) 
 @
@@ -566,7 +563,7 @@ The use of parallel computing with \Rp requires an appropriate parallel backend 
 The following code is loading the \texttt{doParallel} package and registers a (default) parallel backend. The function \texttt{getDoParWorkers()} returns the number of available cores.
 
 <<doParallel, echo=TRUE>>=
-library(doParallel)
+require(doParallel)
 registerDoParallel()
 getDoParWorkers()
 foreach(i=1:3) %dopar% sqrt(i)

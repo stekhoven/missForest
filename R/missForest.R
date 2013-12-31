@@ -246,6 +246,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
           typeY <- varType[varInd]
           if (typeY == "numeric") {
             if (parallelize == 'forests') {
+              xntree <- NULL
               RF <- foreach(xntree=idiv(ntree, chunks=getDoParWorkers()),
                             .combine='combine', .multicombine=TRUE,
                             .packages='randomForest') %dopar% {
