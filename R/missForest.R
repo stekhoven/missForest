@@ -260,8 +260,8 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                             maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
                             }
               ## record out-of-bag error
-              #             OOBerror[varInd] <- mean((predict(RF) - RF$y) ^ 2, na.rm=TRUE)
-              OOBerror[varInd] <- RF$mse[ntree]
+              OOBerror[varInd] <- mean((predict(RF) - RF$y) ^ 2, na.rm=TRUE)
+#               OOBerror[varInd] <- RF$mse[ntree]
             } else {
               RF <- randomForest( x = obsX,
                                   y = obsY,
@@ -274,8 +274,8 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                   maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
               ## record out-of-bag error
               OOBerror[varInd] <- RF$mse[ntree]
-              misY <- predict(RF, misX)
             }
+          misY <- predict(RF, misX)
           } else {
             obsY <- factor(obsY)
             summarY <- summary(obsY)
@@ -303,10 +303,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                   maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
                               }
                 ## record out-of-bag error
-                #               ne <- as.integer(predict(RF)) != as.integer(RF$y)
-                #               ne <- ne[! is.na(ne)]
-                #               oerr <- sum(ne) / length(ne)
-                OOBerror[varInd] <- RF$err.rate[[ntree, 1]]
+                ne <- as.integer(predict(RF)) != as.integer(RF$y)
+                ne <- ne[! is.na(ne)]
+                OOBerror[varInd] <- sum(ne) / length(ne)
               } else {
                 RF <- randomForest(x = obsX, 
                                    y = obsY, 
