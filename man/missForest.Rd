@@ -196,7 +196,7 @@ iris.imp$OOBerror
 iris.imp$error
 
 ## And of course the imputed data matrix (do not run this):
-## iris.imp$Ximp
+## iris.imp$ximp
 }
 \keyword{ nonparametric }
 \keyword{ classes }
