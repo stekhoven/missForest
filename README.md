@@ -12,6 +12,7 @@ innovations (version 1.5):
 - storage of missForests (if this is feasible, it could be used for predictions)
 - housekeeping the code for efficiency 
 - repairing the broken vignette (sorry for that)
+- random seet tracking/setting for fully reproducible imputation results
 - computation time estimation (no promise, just an idea)
 
 Future version of missForest - version 2.0 - will include:
