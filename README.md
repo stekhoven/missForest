@@ -15,7 +15,6 @@ Moreover, we expect to release also a Python library for missForest. We found a 
 
 - storage of missForests (if this is feasible, it could be used for predictions)
 - housekeeping the code for efficiency 
-- repairing the broken vignette (sorry for that)
 
 ### For later...
 
