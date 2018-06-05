@@ -74,7 +74,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       }
     }
     if (getDoParWorkers() > p){
-      stop('The number of parallel cores should not exceed the number of variables (p=', p, ")")
+      stop("The number of parallel cores should not exceed the number of variables (p=", p, ")")
     }
   }
   
@@ -342,7 +342,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     ## check the difference between iteration steps
     for (t.type in names(convNew)){
       t.ind <- which(varType == t.type)
-      if (t.type == "numeric"){
+      if (t.type == 'numeric'){
         convNew[t.co2] <- sum((ximp[,t.ind]-ximp.old[,t.ind])^2)/sum(ximp[,t.ind]^2)
       } else {
         dist <- sum(as.character(as.matrix(ximp[,t.ind])) != as.character(as.matrix(ximp.old[,t.ind])))
