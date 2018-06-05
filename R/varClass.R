@@ -10,7 +10,7 @@ varClass <- function(x){
   xAttrib <- lapply(x, attributes)
   p <- ncol(x)
   x.types <- character(p)
-  for (t.co in 1:p){
+  for (t.co in 1 : p){
     if (is.null(xAttrib[[t.co]])){
       x.types[t.co] <- 'numeric'
     } else {
