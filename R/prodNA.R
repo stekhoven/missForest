@@ -11,7 +11,7 @@ prodNA <- function(x, noNA = 0.1){
   n <- nrow(x)
   p <- ncol(x)
   NAloc <- rep(FALSE, n*p)
-  NAloc[sample(n*p, floor(n*p*noNA))] <- TRUE
+  NAloc[sample(n * p, floor(n * p * noNA))] <- TRUE
   x[matrix(NAloc, nrow = n, ncol = p)] <- NA
   return(x)
 }
