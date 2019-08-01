@@ -82,7 +82,6 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ximp <- xmis
   varType <- character(p)
   for (t.co in 1:p) {
-    print(names(xmis)[t.co])
     if (is.numeric(xmis[[t.co]])) {
       varType[t.co] <- 'numeric'
       ximp[is.na(xmis[,t.co]),t.co] <- mean(xmis[,t.co], na.rm = TRUE)
@@ -92,8 +91,6 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       varType[t.co] <- 'factor'
       ## take the level which is more 'likely' (majority vote)
       max.level <- max(table(ximp[[t.co]]))
-      print(max.level)
-      print(summary(ximp[[t.co]]))
       ## if there are several classes which are major, sample one at random
       class.assign <- sample(names(which(max.level == summary(ximp[[t.co]]))), 1)
       ## it shouldn't be the NA class
