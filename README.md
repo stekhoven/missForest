@@ -7,14 +7,14 @@ The method is based on the publication Stekhoven and Bühlmann, 2012. The R pack
 
 ## Upcoming
 
-Currently, we are working on going multiple imputation with missForest. We are testing several ways of doing it, including an implicit approach making multiple full data set imputations potentially unnecessary. We expect to see these first extensions in the second half of 2017.
+Currently, we are working on going multiple imputation with missForest. We are testing several ways of doing it, including an implicit approach making multiple full data set imputations potentially unnecessary. We expect to see these first extensions in the second half of 2019.
 
-Moreover, we expect to release also a Python library for missForest. We found a collaborator helping us in that regard and we are very excited about that!
+Deal with tibbles and variable attributes.
 
 ### Potential innovations alongside: 
 
 - storage of missForests (if this is feasible, it could be used for predictions)
-- housekeeping the code for efficiency 
+- housekeeping the code for efficiency and safety
 
 ### For later...
 
