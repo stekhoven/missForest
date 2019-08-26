@@ -3,7 +3,7 @@
 ##
 ## This R script contains the actual missForest function.
 ##
-## Author: D.Stekhoven, stekhoven@stat.math.ethz.ch
+## Author: D.Stekhoven, stekhoven@nexus.ethz.ch
 ##
 ## Acknowledgement: Steve Weston for input regarding parallel execution (2012)
 ##############################################################################
@@ -38,7 +38,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ## xtrue        = complete data matrix
   ##
   ## ----------------------------------------------------------------------
-  ## Author: Daniel Stekhoven, stekhoven@stat.math.ethz.ch
+  ## Author: Daniel Stekhoven, stekhoven@nexus.ethz.ch
   
   ## stop in case of wrong inputs passed to randomForest
   n <- nrow(xmis)
@@ -167,7 +167,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       convOld <- convNew
       OOBerrOld <- OOBerr
     }
-    cat("  missForest iteration", iter+1, "in progress...")
+    if (verbose){
+      cat("  missForest iteration", iter+1, "in progress...")
+    }
     t.start <- proc.time()
     ximp.old <- ximp
     
