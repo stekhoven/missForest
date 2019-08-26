@@ -20,7 +20,7 @@ mixError <- function(ximp, xmis, xtrue)
   ## ----------------------------------------------------------------------
   ## Author: Daniel Stekhoven, Date: 26 Jul 2010, 10:10
 
-  if (class(ximp)=='missForest')
+  if (class(ximp) == 'missForest')
     stop("'xmis' is not of class 'missForest' - maybe you forgot to point at the\n  list element $ximp from the missForest output object.")
   x.types <- varClass(ximp)
   n <- nrow(ximp)
