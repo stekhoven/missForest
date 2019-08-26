@@ -80,29 +80,32 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   
   ## perform initial S.W.A.G. on xmis (mean imputation)
   ximp <- xmis
-  xAttrib <- lapply(xmis, attributes)
   varType <- character(p)
-  for (t.co in 1:p){
-    if (is.null(xAttrib[[t.co]])){
+  for (t.co in 1:p) {
+    if (is.numeric(xmis[[t.co]])) {
       varType[t.co] <- 'numeric'
       ximp[is.na(xmis[,t.co]),t.co] <- mean(xmis[,t.co], na.rm = TRUE)
-    } else {
+      next()
+    } 
+    if (is.factor(xmis[[t.co]])) {
       varType[t.co] <- 'factor'
       ## take the level which is more 'likely' (majority vote)
-      max.level <- max(table(ximp[,t.co]))
+      max.level <- max(table(ximp[[t.co]]))
       ## if there are several classes which are major, sample one at random
-      class.assign <- sample(names(which(max.level == summary(ximp[,t.co]))), 1)
+      class.assign <- sample(names(which(max.level == summary(ximp[[t.co]]))), 1)
       ## it shouldn't be the NA class
-      if (class.assign != "NA's"){
-        ximp[is.na(xmis[,t.co]),t.co] <- class.assign
+      if (class.assign != "NA's") {
+        ximp[is.na(xmis[[t.co]]),t.co] <- class.assign
       } else {
-        while (class.assign == "NA's"){
+        while (class.assign == "NA's") {
           class.assign <- sample(names(which(max.level ==
-                                               summary(ximp[,t.co]))), 1)
+                                               summary(ximp[[t.co]]))), 1)
         }
-        ximp[is.na(xmis[,t.co]),t.co] <- class.assign
+        ximp[is.na(xmis[[t.co]]),t.co] <- class.assign
       }
+      next()
     }
+    stop(sprintf('column %s must be factor or numeric, is %s', names(xmis)[t.co], class(xmis[[t.co]])))
   }
   
   ## extract missingness pattern
