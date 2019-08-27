@@ -1,8 +1,1 @@
 language: r
-
-before_install:
-  - tlmgr install Sweave
-  - tlmgr install graphicx
-  - tlmgr install amsmath
-  - tlmgr install amssymb
-  - tlmgr install url
