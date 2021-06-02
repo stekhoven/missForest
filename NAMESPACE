@@ -11,3 +11,7 @@ import(
   foreach,
   itertools
 )
+
+importFrom(iterators,idiv)
+importFrom(doRNG,"%dorng%")
+importFrom("stats", "predict", "var")

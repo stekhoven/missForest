@@ -119,7 +119,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ## compute a list of column indices for variable parallelization
   nzsort.j <- sort.j[sort.noNAvar > 0]
   if (parallelize == 'variables') {
-    '%cols%' <- get('%dopar%')
+    '%cols%' <- get('%dorng%')
     idxList <- as.list(isplitVector(nzsort.j, chunkSize = getDoParWorkers()))
   } 
   #   else {
@@ -254,7 +254,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               xntree <- NULL
               RF <- foreach(xntree = idiv(ntree, chunks = getDoParWorkers()),
                             .combine = 'combine', .multicombine = TRUE,
-                            .packages = 'randomForest') %dopar% {
+                            .packages = 'randomForest') %dorng% {
                               randomForest( x = obsX,
                                             y = obsY,
                                             ntree = xntree,
@@ -291,7 +291,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               if (parallelize == 'forests') {
                 RF <- foreach(xntree = idiv(ntree, chunks = getDoParWorkers()),
                               .combine = 'combine', .multicombine = TRUE,
-                              .packages = 'randomForest') %dopar% {
+                              .packages = 'randomForest') %dorng% {
                                 randomForest(
                                   x = obsX,
                                   y = obsY,
