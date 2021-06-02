@@ -5,7 +5,7 @@ Version: 1.4
 Date: 2013-12-31
 Author: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
-Imports: randomForest,foreach,itertools,iterators
+Imports: randomForest,foreach,itertools,iterators,doRNG
 Suggests: doParallel
 Description: The function 'missForest' in this package is used to
         impute missing values particularly in the case of mixed-type

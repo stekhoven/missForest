@@ -13,3 +13,4 @@ import(
 )
 
 importFrom(iterators,idiv)
+importFrom(doRNG,"%dorng%")
