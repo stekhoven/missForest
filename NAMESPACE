@@ -14,3 +14,4 @@ import(
 
 importFrom(iterators,idiv)
 importFrom(doRNG,"%dorng%")
+importFrom("stats", "predict", "var")
