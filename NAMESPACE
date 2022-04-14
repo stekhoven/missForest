@@ -9,7 +9,8 @@ exportPattern(".")
 import(
   randomForest,
   foreach,
-  itertools
+  itertools,
+  stats
 )
 
 importFrom(iterators,idiv)

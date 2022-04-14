@@ -9,5 +9,5 @@
 
 nrmse <- function(ximp, xmis, xtrue){
   mis <- is.na(xmis)
-  sqrt(mean((ximp[mis] - xtrue[mis])^{2}) / var(xtrue[mis]))
+  sqrt(mean((ximp[mis] - xtrue[mis])^{2}) / stats::var(xtrue[mis]))
 }
