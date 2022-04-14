@@ -338,7 +338,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         }
       }
     }
-    cat('done!\n')
+    if (verbose){
+      cat('done!\n')
+    }
     
     iter <- iter + 1
     Ximp[[iter]] <- ximp
