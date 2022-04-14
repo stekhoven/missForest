@@ -1,8 +1,8 @@
 Package: missForest
 Type: Package
 Title: Nonparametric Missing Value Imputation using Random Forest
-Version: 1.4
-Date: 2013-12-31
+Version: 1.5
+Date: 2022-04-14
 Author: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
 Imports: randomForest,foreach,itertools,iterators,doRNG
@@ -17,4 +17,4 @@ Description: The function 'missForest' in this package is used to
         or elaborate cross-validation. It can be run in parallel to 
         save computation time.
 License: GPL (>= 2)
-URL: http://www.r-project.org, https://github.com/stekhoven/missForest
+URL: https://www.r-project.org, https://github.com/stekhoven/missForest
