@@ -73,9 +73,6 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         cat("  parallelizing computation of the random forest model objects\n")
       }
     }
-    if (getDoParWorkers() > p){
-      stop("The number of parallel cores should not exceed the number of variables (p=", p, ")")
-    }
   }
   
   ## perform initial S.W.A.G. on xmis (mean imputation)
