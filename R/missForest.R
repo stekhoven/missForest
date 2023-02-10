@@ -117,7 +117,6 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   nzsort.j <- sort.j[sort.noNAvar > 0]
   if (parallelize == 'variables') {
     '%cols%' <- get('%dorng%')
-    idxList <- as.list(isplitVector(nzsort.j, chunkSize = getDoParWorkers()))
   } 
   #   else {
   #     ## force column loop to be sequential
@@ -174,67 +173,65 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     ximp.old <- ximp
     
     if (parallelize == "variables"){
-      for (idx in idxList) {
-        results <- foreach(varInd = idx, .packages = 'randomForest') %cols% {
-          obsi <- !NAloc[, varInd] # which i's are observed
-          misi <- NAloc[, varInd] # which i's are missing
-          obsY <- ximp[obsi, varInd] # training response
-          obsX <- ximp[obsi, seq(1, p)[-varInd]] # training variables
-          misX <- ximp[misi, seq(1, p)[-varInd]] # prediction variables
-          typeY <- varType[varInd]
-          if (typeY == 'numeric'){
+      results <- foreach(varInd = nzsort.j, .packages = 'randomForest') %cols% {
+        obsi <- !NAloc[, varInd] # which i's are observed
+        misi <- NAloc[, varInd] # which i's are missing
+        obsY <- ximp[obsi, varInd] # training response
+        obsX <- ximp[obsi, seq(1, p)[-varInd]] # training variables
+        misX <- ximp[misi, seq(1, p)[-varInd]] # prediction variables
+        typeY <- varType[varInd]
+        if (typeY == 'numeric'){
+          RF <- randomForest(
+            x = obsX,
+            y = obsY,
+            ntree = ntree,
+            mtry = mtry,
+            replace = replace,
+            sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+              if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
+            nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
+            maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
+          ## record out-of-bag error
+          oerr <- RF$mse[ntree]
+          #           }
+          ## predict missing values in column varInd
+          misY <- predict(RF, misX)
+        } else { # if Y is categorical          
+          obsY <- factor(obsY) ## remove empty classes
+          summarY <- summary(obsY)
+          if (length(summarY) == 1){ ## if there is only one level left
+            oerr <- 0
+            misY <- factor(rep(names(summarY), length(misi)))
+          } else {
             RF <- randomForest(
               x = obsX,
               y = obsY,
               ntree = ntree,
               mtry = mtry,
               replace = replace,
+              classwt = if (!is.null(classwt)) classwt[[varInd]] else
+                rep(1, nlevels(obsY)),
+              cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
+                rep(1/nlevels(obsY), nlevels(obsY)),
+              strata = if (!is.null(strata)) strata[[varInd]] else obsY,
               sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
-              nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
+                if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+              nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
               maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
             ## record out-of-bag error
-            oerr <- RF$mse[ntree]
-            #           }
+            oerr <- RF$err.rate[[ntree,1]]
+            #             }
             ## predict missing values in column varInd
             misY <- predict(RF, misX)
-          } else { # if Y is categorical          
-            obsY <- factor(obsY) ## remove empty classes
-            summarY <- summary(obsY)
-            if (length(summarY) == 1){ ## if there is only one level left
-              oerr <- 0
-              misY <- factor(rep(names(summarY), length(misi)))
-            } else {
-              RF <- randomForest(
-                x = obsX,
-                y = obsY,
-                ntree = ntree,
-                mtry = mtry,
-                replace = replace,
-                classwt = if (!is.null(classwt)) classwt[[varInd]] else
-                  rep(1, nlevels(obsY)),
-                cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
-                  rep(1/nlevels(obsY), nlevels(obsY)),
-                strata = if (!is.null(strata)) strata[[varInd]] else obsY,
-                sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                  if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
-                nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
-                maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
-              ## record out-of-bag error
-              oerr <- RF$err.rate[[ntree,1]]
-              #             }
-              ## predict missing values in column varInd
-              misY <- predict(RF, misX)
-            }
           }
-          list(varInd = varInd, misY = misY, oerr = oerr)
         }
-        ## update the master copy of the data
-        for (res in results) {
-          misi <- NAloc[,res$varInd]
-          ximp[misi, res$varInd] <- res$misY
-          OOBerror[res$varInd] <- res$oerr
-        }
+        list(varInd = varInd, misY = misY, oerr = oerr)
+      }
+      ## update the master copy of the data
+      for (res in results) {
+        misi <- NAloc[,res$varInd]
+        ximp[misi, res$varInd] <- res$misY
+        OOBerror[res$varInd] <- res$oerr
       }
     } else { # if parallelize != "variables"
       for (s in 1 : p) {
@@ -264,7 +261,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                             }
               ## record out-of-bag error
               OOBerror[varInd] <- mean((predict(RF) - RF$y) ^ 2, na.rm = TRUE)
-#               OOBerror[varInd] <- RF$mse[ntree]
+              #               OOBerror[varInd] <- RF$mse[ntree]
             } else {
               RF <- randomForest( x = obsX,
                                   y = obsY,
@@ -278,7 +275,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               ## record out-of-bag error
               OOBerror[varInd] <- RF$mse[ntree]
             }
-          misY <- predict(RF, misX)
+            misY <- predict(RF, misX)
           } else {
             obsY <- factor(obsY)
             summarY <- summary(obsY)
