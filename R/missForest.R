@@ -28,7 +28,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                        classwt = NULL, cutoff = NULL, strata = NULL,
                        sampsize = NULL, nodesize = NULL, maxnodes = NULL,
                        xtrue = NA, parallelize = c('no', 'variables', 'forests'),
-                       backend = c('ranger', 'randomForest'))
+                       num.threads = NULL, backend = c('ranger', 'randomForest'))
 { ## ----------------------------------------------------------------------
   backend <- match.arg(backend)
   
@@ -45,6 +45,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       frac[!is.finite(frac)] <- 0
       frac <- pmin(pmax(frac, .Machine$double.eps), 1)
       names(frac) <- levels(y)
+      frac <- frac[levels(y)]
       return(frac)
     }
     if (getOption("warn")) warning("sampsize shape not understood; using default fraction")
@@ -265,7 +266,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
             RF <- ranger::ranger(x=obsX, y=obsY, num.trees=ntree, mtry=mtry, replace=replace,
                                  sample.fraction=sf, min.bucket = if (!is.null(nodesize)) nodesize[1] else 5,
                                  write.forest=TRUE, oob.error=TRUE,
-                                 num.threads = if (parallelize=='forests') foreach::getDoParWorkers() else NULL,
+                                 num.threads = if (!is.null(num.threads)) num.threads else if (parallelize=='forests') foreach::getDoParWorkers() else NULL,
                                  verbose=FALSE)
             OOBerror[varInd] <- RF$prediction.error
             misY <- ranger::predict(RF, data = misX)$predictions
