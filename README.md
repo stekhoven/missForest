@@ -1,32 +1,159 @@
 # missForest
 
-missForest is a nonparametric, mixed-type imputation method for basically any type of data.  
-Here, we host the R-package "missForest" for the statistical software R.  
+**missForest** is a nonparametric imputation method for **mixed-type** tabular data in R. It handles **numeric and categorical** variables simultaneously by iteratively training random forests to predict missing entries from the observed ones. No explicit modeling assumptions, no matrix factorizations—just strong predictive baselines that work well out of the box.
 
-The method is based on the publication Stekhoven and Bühlmann, 2012. The R package contains a vignette on how to use "missForest" in R including many helpful examples.  
+* Works with **any mix of numeric and factor columns**
+* Captures **nonlinearities** and **interactions**
+* Reports **out-of-bag (OOB)** imputation error (NRMSE/PFC)
+* Supports **parallel execution** (per-variable or per-forest)
+* Two forest backends: **[`ranger`](https://cran.r-project.org/package=ranger)** (default) and **[`randomForest`](https://cran.r-project.org/package=randomForest)** (legacy/compat)
 
-## Upcoming
+The package also includes utilities to measure imputation error, generate missingness for experiments, and inspect variable types.
 
-Currently, we are working on going multiple imputation with missForest. We are testing several ways of doing it, including an implicit approach making multiple full data set imputations potentially unnecessary. We expect to see these first extensions in the second half of 2019.
+---
 
-Deal with tibbles and variable attributes.
+## Installation
 
-### Potential innovations alongside: 
+```r
+# CRAN (recommended)
+install.packages("missForest")
 
-- storage of missForests (if this is feasible, it could be used for predictions)
-- housekeeping the code for efficiency and safety
+# Development version (from GitHub)
+# install.packages("remotes")
+remotes::install_github("stekhoven/missForest")
+```
 
-### For later...
+---
 
-Stuff we consider less interesting  - write us if you disagree:
+## Quick start
 
-- different stopping criteria (missForest is very well performing on the existing criterion, we see no need to adjust for this)
-- random seed tracking/setting for fully reproducible imputation results (due to the little variability in the estimation of missForest - even if it is stochastic - results are _quasi_ reproducible)
-- computation time estimation (harder than we thought and not so pressing)
+```r
+library(missForest)
 
-## Contact us
+# Example data
+data(iris)
 
-Contact me by email: stekhoven@nexus.ethz.ch  
+# Introduce ~20% MCAR missingness
+set.seed(81)
+iris_mis <- prodNA(iris, noNA = 0.20)
 
-References: 
-Stekhoven, D.J. and Buehlmann, P. (2012), 'MissForest - nonparametric missing value imputation  for mixed-type data', Bioinformatics, 28(1) 2012, 112-118, doi: 10.1093/bioinformatics/btr597
+# Impute with default backend (ranger)
+imp <- missForest(iris_mis, xtrue = iris, verbose = TRUE)
+
+# Imputed data
+head(imp$ximp)
+
+# Estimated OOB errors (NRMSE for numeric, PFC for factors)
+imp$OOBerror
+
+# True error if xtrue was provided (for benchmarking only)
+imp$error
+```
+
+### Choosing a backend
+
+```r
+# Legacy behavior using randomForest
+imp_rf <- missForest(iris_mis, backend = "randomForest")
+
+# Explicitly use ranger with limited threads
+imp_rg <- missForest(iris_mis, backend = "ranger", num.threads = 2)
+```
+
+### Parallelization
+
+Two modes are available via `parallelize`:
+
+* `"variables"`: build forests for different variables in parallel (register a foreach backend).
+* `"forests"`: parallelize within a single variable’s forest (ranger threads; or foreach sub-forests for randomForest).
+
+```r
+# Not run:
+# library(doParallel)
+# registerDoParallel(2)
+# imp_vars <- missForest(iris_mis, parallelize = "variables", verbose = TRUE)
+# imp_fors <- missForest(iris_mis, parallelize = "forests",  verbose = TRUE, num.threads = 2)
+```
+
+---
+
+## API overview
+
+### `missForest(xmis, ...)`
+
+Core imputation function.
+
+Key arguments:
+
+* `xmis` — data frame/matrix with missing values (columns must be `numeric` or `factor`).
+* `maxiter` — maximum iterations (default `10`).
+* `ntree` — trees per forest (default `100`).
+* `mtry` — variables tried at each split (default `sqrt(p)`).
+* `nodesize` — **length-2 numeric**: minimum node size for **c(numeric, factor)**. Default `c(5, 1)`.
+* `variablewise` — return per-variable OOB error if `TRUE`.
+* `parallelize` — `"no"`, `"variables"`, or `"forests"`.
+* `num.threads` — threads for `ranger` (ignored by `randomForest`).
+* `backend` — `"ranger"` (default) or `"randomForest"`.
+* `xtrue` — optional complete data for **benchmarking** (adds `$error`).
+
+Some argument mappings for `backend = "ranger"`:
+
+* `ntree → num.trees`
+* `nodesize → min.bucket` (separately for regression/classification; default `c(5,1)`)
+* `sampsize` (counts) → `sample.fraction` (fractions; overall or per-class)
+* `classwt → class.weights`
+* `cutoff` handled by fitting **probability forests** and post-thresholding
+
+### Utilities
+
+* `mixError(ximp, xmis, xtrue)` — computes **NRMSE** (numeric) and **PFC** (factor) over true missing entries.
+* `nrmse(ximp, xmis, xtrue)` — NRMSE for continuous-only data.
+* `prodNA(x, noNA = 0.1)` — injects MCAR missingness into a data frame.
+* `varClass(x)` — returns `"numeric"`/`"factor"` per column.
+
+---
+
+## Tips & best practices
+
+* Convert character columns to factors before calling `missForest`.
+* For wide data, consider `parallelize = "variables"`. For deep/expensive trees, consider `parallelize = "forests"`.
+* Set a seed for quasi-reproducible results:
+
+  ```r
+  set.seed(123); imp <- missForest(x)
+  ```
+* You can lower `ntree` during prototyping to speed up iteration.
+
+---
+
+## Citation
+
+If you use **missForest**, please cite:
+
+* Stekhoven, D. J. & Bühlmann, P. (2012). *MissForest—nonparametric missing value imputation for mixed-type data.* **Bioinformatics**, 28(1), 112–118. [https://doi.org/10.1093/bioinformatics/btr597](https://doi.org/10.1093/bioinformatics/btr597)
+
+You can also cite the package:
+
+```r
+citation("missForest")
+```
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. Please include a minimal reproducible example when reporting bugs. For performance discussions, share small benchmarks and session info.
+
+---
+
+## License
+
+GPL (≥ 2)
+
+---
+
+## Contact
+
+Daniel J. Stekhoven — [stekhoven@stat.math.ethz.ch](mailto:stekhoven@stat.math.ethz.ch)
+
+---
