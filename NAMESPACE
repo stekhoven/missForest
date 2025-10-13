@@ -1,18 +1,18 @@
 # NAMESPACE for the R package 'missForest'
-# Created 2012-02-20 by D. Stekhoven
-# Updated last 2022-04-14
+# Updated 2025-10-13 for v1.6
 
-# Export all names
-exportPattern(".")
+# ---- Exports ----
+export(missForest)
+export(mixError)
+export(nrmse)
+export(prodNA)
+export(varClass)
 
-# Import all packages listed as Imports or Depends
-import(
-  randomForest,
-  foreach,
-  itertools,
-  stats
-)
+# ---- Imports ----
+import(ranger)
+import(randomForest)
 
-importFrom(iterators,idiv)
-importFrom(doRNG,"%dorng%")
-importFrom("stats", "predict", "var")
+importFrom(foreach, foreach, getDoParWorkers)
+importFrom(iterators, idiv, isplitVector)
+importFrom(doRNG, "%dorng%")
+importFrom(stats, predict, var)
