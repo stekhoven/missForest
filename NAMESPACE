@@ -1,18 +1,24 @@
 # NAMESPACE for the R package 'missForest'
 # Updated 2025-10-13 for v1.6
 
-# ---- Exports ----
+## Exported user-facing functions
 export(missForest)
 export(mixError)
 export(nrmse)
 export(prodNA)
 export(varClass)
 
-# ---- Imports ----
-import(ranger)
-import(randomForest)
+## Narrow, explicit imports to avoid name conflicts (e.g., importance)
+importFrom(randomForest, randomForest, combine)
+importFrom(ranger, ranger)
 
 importFrom(foreach, foreach, getDoParWorkers)
-importFrom(iterators, idiv, isplitVector)
+importFrom(iterators, idiv)
+importFrom(itertools, isplitVector)
 importFrom(doRNG, "%dorng%")
+
+## Rdpack is used for Rd macros; import one symbol to satisfy checks
+importFrom(Rdpack, reprompt)
+
+## Generics/utilities from stats used in the code
 importFrom(stats, predict, var)

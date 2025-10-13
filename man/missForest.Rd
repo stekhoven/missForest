@@ -125,13 +125,13 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
 
   \strong{Backends.} With \code{backend = "ranger"}, arguments are mapped as:
   \itemize{
-    \item \code{ntree} $\rightarrow$ \code{num.trees}
-    \item \code{nodesize} (numeric/factor) $\rightarrow$ \code{min.bucket}
+    \item \code{ntree} -> \code{num.trees}
+    \item \code{nodesize} (numeric/factor) -> \code{min.bucket}
           for regression/classification, respectively (defaults used here are
           \code{c(5, 1)}).
-    \item \code{sampsize} (counts) $\rightarrow$ \code{sample.fraction}
+    \item \code{sampsize} (counts) -> \code{sample.fraction}
           (overall or per-class fractions).
-    \item \code{classwt} $\rightarrow$ \code{class.weights}.
+    \item \code{classwt} -> \code{class.weights}.
     \item \code{cutoff}: emulated via probability forests and post-thresholding.
     \item \code{maxnodes}: no direct equivalent in \pkg{ranger} (ignored).
   }

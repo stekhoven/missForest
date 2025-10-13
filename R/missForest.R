@@ -158,7 +158,7 @@ missForest <- function(xmis,
   nzsort.j <- sort.j[sort.noNAvar > 0]
   if (parallelize == 'variables') {
     `%cols%` <- doRNG::`%dorng%`
-    idxList <- as.list(iterators::isplitVector(nzsort.j, chunkSize = foreach::getDoParWorkers()))
+    idxList <- as.list(isplitVector(nzsort.j, chunkSize = foreach::getDoParWorkers()))
   }
   
   ## outputs and convergence trackers

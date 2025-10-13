@@ -3,26 +3,37 @@ Type: Package
 Title: Nonparametric Missing Value Imputation using Random Forest
 Version: 1.6
 Date: 2025-10-13
-Authors@R: c(
-    person(given = c("Daniel", "J."),
-           family = "Stekhoven",
-           email = "stekhoven@nexus.ethz.ch",
-           role = c("aut", "cre"))
-)
+Authors@R: 
+    c(person(given = c("Daniel","J."),
+             family = "Stekhoven",
+             role = c("aut","cre"),
+             email = "stekhoven@nexus.ethz.ch"))
 Maintainer: Daniel J. Stekhoven <stekhoven@nexus.ethz.ch>
-Description: The function 'missForest' is used to impute missing values
-    in mixed-type data. It uses random forests trained on the observed
-    values of a data matrix to predict the missing values. It can impute
-    continuous and/or categorical data including complex interactions and
-    non-linear relations. The method yields an out-of-bag (OOB) imputation
-    error estimate without the need of a test set or cross-validation and
-    supports parallel computation. The package now defaults to a
-    'ranger'-backed implementation with an optional 'randomForest'
-    backend for compatibility.
+Imports: 
+    randomForest,
+    ranger,
+    foreach,
+    iterators,
+    itertools,
+    doRNG,
+    stats,
+    Rdpack
+Suggests: 
+    doParallel,
+    knitr, 
+    rmarkdown
+VignetteBuilder: knitr
+Description: The function 'missForest' in this package is used to
+    impute missing values particularly in the case of mixed-type
+    data. It uses a random forest (via 'ranger' or 'randomForest') trained on the observed values of
+    a data matrix to predict the missing values. It can be used to
+    impute continuous and/or categorical data including complex
+    interactions and non-linear relations. It yields an out-of-bag
+    (OOB) imputation error estimate without the need of a test set
+    or elaborate cross-validation. It can be run in parallel to 
+    save computation time.
 License: GPL (>= 2)
 URL: https://www.r-project.org, https://github.com/stekhoven/missForest
 BugReports: https://github.com/stekhoven/missForest/issues
-Imports: Rdpack (>= 2.5), randomForest, ranger, foreach, itertools, iterators, doRNG
 RdMacros: Rdpack
-Suggests: doParallel
 Encoding: UTF-8
