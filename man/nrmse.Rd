@@ -1,46 +1,62 @@
 \name{nrmse}
 \alias{nrmse}
-\title{
-  Normalized Root Mean Squared Error
-}
+\title{Normalized root mean squared error}
 \description{
-  'nrmse' computes the normalized root mean squared error for a given
-  complete data matrix, imputed data matrix and the data matrix containing
-  missing values.
+  \code{nrmse} computes the normalized root mean squared error (NRMSE)
+  for a given complete data matrix \code{xtrue}, an imputed matrix
+  \code{ximp}, and the corresponding matrix with missing values \code{xmis}.
 }
 \usage{
 nrmse(ximp, xmis, xtrue)
 }
-
 \arguments{
   \item{ximp}{
-    imputed data matrix with variables in the columns and observations in
-    the rows. Note there should not be any missing values.
+    Imputed data matrix (or data frame) with variables in columns and
+    observations in rows. Must be numeric and contain no missing values.
   }
   \item{xmis}{
-    data matrix with missing values.
+    Data matrix (or data frame) with the original missing values. Its
+    dimensions and column order must match \code{ximp} and \code{xtrue}.
   }
   \item{xtrue}{
-    complete data matrix. Note there should not be any missing values.
+    Complete data matrix (or data frame). Must be numeric and contain no
+    missing values. Dimensions and column order must match \code{xmis}/\code{ximp}.
   }
 }
+\details{
+  The NRMSE is computed over the entries that were missing in \code{xmis}
+  and are numeric in \code{xtrue} / \code{ximp}, using
+  \deqn{\mathrm{NRMSE} = \sqrt{\frac{\mathrm{mean}\{(X_{\mathrm{true}} - X_{\mathrm{imp}})^2\}}
+                                       {\mathrm{var}(X_{\mathrm{true}})}}\,,}
+  where \eqn{\mathrm{mean}} and \eqn{\mathrm{var}} are the empirical mean
+  and variance computed over the continuous missing entries only.
+  This measure is intended for continuous data; for categorical or mixed-type
+  data, see \code{\link{mixError}}.
+}
 \value{
-  see Title.
+  A numeric scalar: the normalized root mean squared error.
 }
 \references{
-  Oba et al. (2003), 'A Bayesian missing value estimation method for gene
-  expression profile data', Bioinformatics, 19(16), 2088-2096
+\insertRef{Oba2003}{missForest}
 }
 \author{
-  Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
+\packageAuthor{missForest}
 }
 \note{
-  The NRMSE can only be computed for continuous data. For categorical or
-  mixed-type data see \code{\link{mixError}}.
-
-  This function is internally used by \code{\link{mixError}}.
+  This function is used internally by \code{\link{mixError}}.
 }
 \seealso{
-  \code{\link{mixError}}
+  \code{\link{mixError}}, \code{\link{missForest}}
 }
-\keyword{ error }
+\examples{
+## Simple numeric example
+set.seed(1)
+xtrue <- matrix(rnorm(100), ncol = 5)
+xmis  <- xtrue
+xmis[sample(length(xmis), 10)] <- NA
+ximp  <- xmis
+ximp[is.na(ximp)] <- rowMeans(ximp, na.rm = TRUE)[row(ximp)[is.na(ximp)]]
+
+nrmse(ximp, xmis, xtrue)
+}
+\keyword{error}

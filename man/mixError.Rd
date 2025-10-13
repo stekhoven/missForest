@@ -1,61 +1,78 @@
 \name{mixError}
 \alias{mixError}
 \title{
-Compute Imputation Error for Mixed-type Data
+  Compute Imputation Error for Mixed-type Data
 }
 \description{
-  'mixError' is used to calculate the imputation error particularly in
-  the case of mixed-type data. Given the complete data matrix and the
-  data matrix containing the missing values the normalized root mean
-  squared error for the continuous and the proportion of falsely
-  classified entries for the categorical variables are computed.
+  \code{mixError} computes imputation error for mixed-type data given the
+  imputed matrix (\code{ximp}), the original matrix with missing values
+  (\code{xmis}), and the complete ground truth (\code{xtrue}). It reports the
+  normalized root mean squared error (NRMSE) for numeric variables and the
+  proportion of falsely classified entries (PFC) for factor variables.
 }
 \usage{
 mixError(ximp, xmis, xtrue)
 }
 \arguments{
   \item{ximp}{
-    imputed data matrix with variables in the columns and observations in
-    the rows. Note there should not be any missing values.
+    Imputed data matrix (or data frame) with variables in columns and
+    observations in rows. There must be no missing values.
   }
   \item{xmis}{
-    data matrix with missing values.
+    Data matrix (or data frame) with missing values used to derive the
+    missingness pattern.
   }
   \item{xtrue}{
-    complete data matrix. Note there should not be any missing values.
+    Complete data matrix (or data frame) containing the true values. There
+    must be no missing values.
   }
 }
 \value{
-imputation error. In case of continuous variables only this is the
-normalized root mean squared error (NRMSE, see 'help(missForest)' for
-further details). In case of categorical variables onlty this is the
-proportion of falsely classified entries (PFC). In case of mixed-type
-variables both error measures are supplied.
-}
-\author{
-Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
+  A named vector with the imputation error(s):
+  \itemize{
+    \item \code{NRMSE}: normalized root mean squared error computed over the
+      numeric entries that were missing in \code{xmis}.
+    \item \code{PFC}: proportion of falsely classified entries computed over
+      the factor entries that were missing in \code{xmis}.
+  }
+  If only one type (numeric or factor) is present among the missing entries,
+  only the corresponding error is returned.
 }
 \note{
-This function is internally used by \code{\link{missForest}} whenever a complete
-data matrix is supplied.
+  Columns are treated by their \R classes: numeric metrics are computed for
+  \code{numeric} columns and classification metrics for \code{factor}
+  columns. Character columns should be converted to factors beforehand.
+
+  This function is used internally by \code{\link{missForest}} when a complete
+  matrix \code{xtrue} is supplied.
 }
 \seealso{
-\code{\link{missForest}}
+  \code{\link{missForest}}, \code{\link{nrmse}}
+}
+\references{
+  \insertRef{StekhovenBuehlmann2012}{missForest}
+
+  For the NRMSE notion in imputation benchmarking:
+  \insertRef{Oba2003}{missForest}
+}
+\author{
+  \packageAuthor{missForest}
 }
 \examples{
-## Compute imputation error for mixed-type data:
+## Mixed-type error computation on iris:
 data(iris)
 
-## Artificially produce missing values using the 'prodNA' function:
+## Introduce missingness:
 set.seed(81)
 iris.mis <- prodNA(iris, noNA = 0.2)
 
-## Impute missing values using 'missForest':
+## Impute:
 iris.imp <- missForest(iris.mis)
 
-## Compute the true imputation error manually:
+## Compute the true imputation error:
 err.imp <- mixError(iris.imp$ximp, iris.mis, iris)
 err.imp
 }
-\keyword{ classes }
-\keyword{ NA }% __ONLY ONE__ keyword per line
+\keyword{nonparametric}
+\keyword{classes}
+\keyword{NA}

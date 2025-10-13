@@ -1,203 +1,207 @@
 \name{missForest}
 \alias{missForest}
 \title{
-  Nonparametric Missing Value Imputation using Random Forest
+  Nonparametric Missing Value Imputation using Random Forests (ranger or randomForest)
 }
 \description{
-  'missForest' is used to impute missing values particularly in the case
-  of mixed-type data. It can be used to impute continuous and/or
-  categorical data including complex interactions and nonlinear
-  relations. It yields an out-of-bag (OOB) imputation error estimate. 
-  Moreover, it can be run parallel to save computation time.
+  \code{missForest} imputes missing values for mixed-type data (numeric and
+  categorical). It models complex interactions and nonlinear relations and
+  returns an out-of-bag (OOB) imputation error estimate. It supports
+  parallel execution and offers two backends: \pkg{ranger} (default) and
+  \pkg{randomForest} (legacy/compatibility).
 }
 \usage{
 missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
-                       decreasing = FALSE, verbose = FALSE,
-                       mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
-                       classwt = NULL, cutoff = NULL, strata = NULL,
-                       sampsize = NULL, nodesize = NULL, maxnodes = NULL,
-                       xtrue = NA, parallelize = c('no', 'variables', 'forests'))
+           decreasing = FALSE, verbose = FALSE,
+           mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
+           classwt = NULL, cutoff = NULL, strata = NULL,
+           sampsize = NULL, nodesize = NULL, maxnodes = NULL,
+           xtrue = NA, parallelize = c("no", "variables", "forests"),
+           num.threads = NULL, backend = c("ranger", "randomForest"))
 }
 \arguments{
   \item{xmis}{
-    a data matrix with missing values. The columns correspond to the
-    variables and the rows to the observations.
+    A data frame or matrix with missing values. Columns are variables,
+    rows are observations. All columns must be \code{numeric} or \code{factor}
+    (character columns should be converted to factors beforehand).
   }
   \item{maxiter}{
-    maximum number of iterations to be performed given the stopping criterion
-    is not met beforehand.
+    Maximum number of iterations unless the stopping criterion is met earlier.
   }
   \item{ntree}{
-    number of trees to grow in each forest.
+    Number of trees to grow in each per-variable forest.
   }
   \item{variablewise}{
-    logical. If 'TRUE' the OOB error is returned for each variable
-    separately. This can be useful as a reliability check for the
-    imputed variables w.r.t. to a subsequent data analysis.
+    Logical. If \code{TRUE}, return an OOB error per variable; otherwise
+    report one error for numeric variables (NRMSE) and one for factors (PFC).
   }
   \item{decreasing}{
-    logical. If 'FALSE' then the variables are sorted w.r.t. increasing
-    amount of missing entries during computation. 
+    Logical. If \code{FALSE}, variables are processed in increasing order of
+    missingness.
   }
   \item{verbose}{
-    logical. If 'TRUE' the user is supplied with additional output between
-    iterations, i.e., estimated imputation error, runtime and if complete
-    data matrix is supplied the true imputation error. See 'xtrue'.
+    Logical. If \code{TRUE}, print iteration-wise diagnostics (estimated error,
+    runtime, and—if \code{xtrue} is given—the true error).
   }
   \item{mtry}{
-    number of variables randomly sampled at each split. This argument is
-    directly supplied to the 'randomForest' function. Note that the
-    default value is sqrt(p) for both categorical and continuous
-    variables where p is the number of variables in 'xmis'.
+    Number of candidate variables at each split. Passed to the backend
+    (\pkg{randomForest} or \pkg{ranger}). Default is \eqn{\sqrt{p}}.
   }
   \item{replace}{
-    logical. If 'TRUE' bootstrap sampling (with replacements) is
-    performed else subsampling (without replacements).
+    Logical. If \code{TRUE}, bootstrap sampling (with replacement) is used;
+    otherwise subsampling (without replacement).
   }
   \item{classwt}{
-    list of priors of the classes in the categorical variables. This is
-    equivalent to the randomForest argument, however, the user has to
-    set the priors for all categorical variables in the data set (for
-    continuous variables set it 'NULL').
+    List of class priors for the categorical variables. Same list semantics as
+    in \pkg{randomForest}: one element per variable (set \code{NULL} for numeric
+    variables). With backend \code{"ranger"}, this maps to \code{class.weights}.
   }
   \item{cutoff}{
-    list of class cutoffs for each categorical variable. Same as with
-    'classwt' (for continuous variables set it '1').
+    List of per-class cutoff vectors for each categorical variable. As in
+    \pkg{randomForest}, one element per factor variable. With backend
+    \code{"ranger"}, cutoffs are emulated by fitting a probability forest and
+    thresholding predicted class probabilities post-hoc.
   }
   \item{strata}{
-    list of (factor) variables used for stratified sampling. Same as
-    with 'classwt' (for continuous variables set it 'NULL').
+    List of (factor) variables used for stratified sampling (legacy
+    \pkg{randomForest} semantics). Ignored by \pkg{ranger}.
   }
   \item{sampsize}{
-    list of size(s) of sample to draw. This is equivalent to the
-    randomForest argument, however, the user has to set the sizes for
-    all variables.
+    List of sample sizes per variable (legacy \pkg{randomForest} semantics).
+    With backend \code{"ranger"}, these are converted to \code{sample.fraction}
+    (overall or per-class fractions, as appropriate).
   }
   \item{nodesize}{
-    minimum size of terminal nodes. Has to be a vector of length 2, with
-    the first entry being the number for continuous variables and the
-    second entry the number for categorical variables. Default is 1 for
-    continuous and 5 for categorical variables.
+    Minimum node size. A numeric vector of length 2:
+    \emph{first} entry for \strong{numeric} variables, \emph{second} for
+    \strong{factor} variables. \strong{Default:} \code{c(5, 1)}.
+    With backend \code{"ranger"}, this maps to \code{min.bucket} (no exact
+    1:1 mapping to \pkg{randomForest}'s terminal-node semantics).
   }
   \item{maxnodes}{
-    maximum number of terminal nodes for trees in the forest.
+    Maximum number of terminal nodes per tree. Used with backend
+    \code{"randomForest"}. With \code{"ranger"}, this argument is ignored
+    (consider \code{max.depth} at the \pkg{ranger} level if needed).
   }
   \item{xtrue}{
-    optional. Complete data matrix. This can be supplied to test the
-    performance. Upon providing the complete data matrix 'verbose' will
-    show the true imputation error after each iteration and the output
-    will also contain the final true imputation error.
+    Optional complete data matrix for benchmarking. If provided, the
+    iteration log includes the true imputation error, and the return value
+    includes it as \code{$error}.
   }
   \item{parallelize}{
-    should 'missForest' be run parallel. Default is 'no'. If 'variables'
-    the data is split into pieces of the size equal to the number of cores
-    registered in the parallel backend. If 'forests' the total number of trees in 
-    each random forests is split in the same way. Whether 'variables' or 'forests'
-    is more suitable, depends on the data. See Details.
+    Should \code{missForest} run in parallel? One of
+    \code{"no"}, \code{"variables"}, or \code{"forests"}.
+    \describe{
+      \item{\code{"variables"}}{Forests for different variables are built in
+        parallel using a registered \pkg{foreach} backend.}
+      \item{\code{"forests"}}{Within a variable, the forest is built using
+        the backend's threading (for \code{"ranger"}) or via
+        \pkg{foreach} sub-forests (for \code{"randomForest"}).}
+    }
+    Which choice is faster depends on data shape and backend.
+  }
+  \item{num.threads}{
+    Integer (or \code{NULL}). Number of threads for \pkg{ranger}. If
+    \code{parallelize = "variables"}, per-variable \pkg{ranger} calls use
+    \code{num.threads = 1} internally to avoid nested oversubscription.
+    Otherwise, if \code{NULL}, \pkg{ranger}'s default is used.
+    Ignored by \code{"randomForest"}.
+  }
+  \item{backend}{
+    Character. \code{"ranger"} (default) uses \pkg{ranger} for forest fitting;
+    \code{"randomForest"} retains legacy behavior for compatibility.
   }
 }
 \details{
-  After each iteration the difference between the previous and the new
-  imputed data matrix is assessed for the continuous and categorical
-  parts. The stopping criterion is defined such that the imputation
-  process is stopped as soon as both differences have become larger
-  once. In case of only one type of variable the computation stops as
-  soon as the corresponding difference goes up for the first
-  time. However, the imputation last performed where both differences
-  went up is generally less accurate than the previous one. Therefore,
-  whenever the computation stops due to the stopping criterion (and not
-  due to 'maxiter') the before last imputation matrix is returned.
-  
-  The normalized root mean squared error (NRMSE) is defined as:
+  \strong{Algorithm.} The method iteratively imputes each variable with missing
+  values by fitting a random forest on the observed part of that variable and
+  the current imputations of all other variables. After each iteration, the
+  difference between the current and previous imputed matrices is computed
+  separately for numeric and factor columns. The stopping rule is met once both
+  differences have increased at least once (or only the present type increases
+  if there is only one type). In that case, the \emph{previous} imputation
+  (before the increase) is returned. Otherwise, the process stops at
+  \code{maxiter}.
 
-  \deqn{\sqrt{\frac{mean((X_{true} - X_{imp})^2)}{var(X_{true})}}}
+  \strong{Backends.} With \code{backend = "ranger"}, arguments are mapped as:
+  \itemize{
+    \item \code{ntree} -> \code{num.trees}
+    \item \code{nodesize} (numeric/factor) -> \code{min.bucket}
+          for regression/classification, respectively (defaults used here are
+          \code{c(5, 1)}).
+    \item \code{sampsize} (counts) -> \code{sample.fraction}
+          (overall or per-class fractions).
+    \item \code{classwt} -> \code{class.weights}.
+    \item \code{cutoff}: emulated via probability forests and post-thresholding.
+    \item \code{maxnodes}: no direct equivalent in \pkg{ranger} (ignored).
+  }
+  The reported OOB error uses \pkg{ranger}'s \code{$prediction.error}
+  (MSE for numeric, error rate for factors), except when \code{cutoff} is used:
+  in that case, the misclassification rate is computed by applying the cutoffs
+  to OOB class probabilities.
 
-  where \eqn{X_{true}} the complete data matrix, \eqn{X_{imp}} the
-  imputed data matrix and 'mean'/'var' being used as short notation for
-  the empirical mean and variance computed over the continuous missing
-  values only.
+  \strong{Parallelization.} Two modes are available via \code{parallelize}:
+  \itemize{
+    \item \code{"variables"}: different variables are imputed in parallel
+          using \pkg{foreach}; per-variable \pkg{ranger} calls use
+          \code{num.threads = 1}.
+    \item \code{"forests"}: a single variable’s forest is built using
+          \pkg{ranger} multithreading (controlled by \code{num.threads}) or,
+          for \code{"randomForest"}, by combining sub-forests via \pkg{foreach}.
+  }
+  Make sure you have registered a parallel backend if you choose a parallel mode.
 
-  The proportion of falsely classified (PFC) is also computed over the
-  categorical missing values only.
-
-  For feasibility reasons 'ntree', 'mtry', 'nodesize' and 'maxnodes' can
-  be chosen smaller. The number of trees can be chosen fairly small
-  since growing many forests (e.g. p forests in each iteration) all
-  observations get predicted a few times. The runtime behaves linear
-  with 'ntree'. In case of high-dimensional data we recommend using a
-  small 'mtry' (e.g. 100 should work) to obtain an appropriate
-  imputation result within a feasible amount of time.
-  
-  Using an appropriate backend 'missForest' can be run parallel. 
-  There are two possible ways to do this. One way is to create the random forest
-  object in parallel (parallelize = "forests"). This is most useful 
-  if a single forest object takes long to compute and there are not 
-  many variables in the data. The second way is to compute multiple random
-  forest classifiers parallel on different variables (parallelize = "variables").
-  This is most useful if the data contains many variables and computing 
-  the random forests is not taking too long. For details on how to register 
-  a parallel backend see for instance the documentation of 'doParallel').
-
-  See the vignette for further examples on how to use missForest.
-  
-  I thank Steve Weston for his input regarding parallel computation of 'missForest'.
+  See the vignette for further examples and discussion.
 }
 \value{
   \item{ximp}{
-    imputed data matrix of same type as 'xmis'.
+    Imputed data matrix (same classes as \code{xmis}).
   }
   \item{OOBerror}{
-    estimated OOB imputation error. For the set of continuous
-    variables in 'xmis' the NRMSE and for the set of categorical variables
-    the proportion of falsely classified entries is returned. See Details
-    for the exact definition of these error measures. If 'variablewise'
-    is set to 'TRUE' then this will be a vector of length 'p' where 'p' is
-    the number of variables and the entries will be the OOB error for each
-    variable separately.
+    Estimated OOB imputation error. For numeric variables, the normalized
+    root mean squared error (NRMSE); for factors, the proportion falsely
+    classified (PFC). If \code{variablewise = TRUE}, a vector of length
+    \eqn{p} with per-variable errors is returned (labeled \code{"MSE"} for
+    numeric and \code{"PFC"} for factors).
   }
   \item{error}{
-    true imputation error. This is only available if 'xtrue'
-    was supplied. The error measures are the same as for 'OOBerror'.}
+    True imputation error (NRMSE/PFC), present only if \code{xtrue} was given.
   }
-\references{Stekhoven, D.J. and Buehlmann, P. (2012), 'MissForest -
-  nonparametric missing value imputation for mixed-type data',
-  Bioinformatics, 28(1) 2012, 112-118, doi: 10.1093/bioinformatics/btr597}
+}
+\references{
+\insertRef{StekhovenBuehlmann2012}{missForest}
+}
 \author{
-Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
+\packageAuthor{missForest}
 }
 \seealso{
-  \code{\link{mixError}}, \code{\link{prodNA}}, \code{\link{randomForest}}
+  \code{\link{mixError}}, \code{\link{prodNA}},
+  \code{\link[randomForest]{randomForest}},
+  \code{\link[ranger]{ranger}}
 }
 \examples{
-## Nonparametric missing value imputation on mixed-type data:
+## Mixed-type imputation on iris:
 data(iris)
-summary(iris)
-
-## The data contains four continuous and one categorical variable.
-
-## Artificially produce missing values using the 'prodNA' function:
 set.seed(81)
 iris.mis <- prodNA(iris, noNA = 0.2)
-summary(iris.mis)
 
-## Impute missing values providing the complete matrix for
-## illustration. Use 'verbose' to see what happens between iterations:
-iris.imp <- missForest(iris.mis, xtrue = iris, verbose = TRUE)
+## Default: ranger backend
+imp_rg <- missForest(iris.mis, xtrue = iris, verbose = TRUE)
+imp_rg$OOBerror
+imp_rg$error  # requires xtrue
 
-## The imputation is finished after five iterations having a final
-## true NRMSE of 0.143 and a PFC of 0.036. The estimated final NRMSE
-## is 0.157 and the PFC is 0.025 (see Details for the reason taking
-## iteration 4 instead of iteration 5 as final value).
+## Legacy behavior: randomForest backend
+imp_rf <- missForest(iris.mis, backend = "randomForest", verbose = TRUE)
 
-## The final results can be accessed directly. The estimated error:
-iris.imp$OOBerror
-
-## The true imputation error (if available):
-iris.imp$error
-
-## And of course the imputed data matrix (do not run this):
-## iris.imp$ximp
+## Parallel examples (register a backend first, e.g., doParallel):
+## Not run:
+# library(doParallel)
+# registerDoParallel(2)
+# imp_vars <- missForest(iris.mis, parallelize = "variables", verbose = TRUE)
+# imp_fors <- missForest(iris.mis, parallelize = "forests", verbose = TRUE,
+#                        num.threads = 2)  # used by ranger
+## End(Not run)
 }
-\keyword{ nonparametric }
-\keyword{ classes }
-\keyword{ NA }
+\keyword{nonparametric}
+\keyword{classes}
+\keyword{NA}

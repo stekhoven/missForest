@@ -1,32 +1,30 @@
 \name{varClass}
 \alias{varClass}
 \title{
-  Extract Variable Types from a Dataframe
+  Extract Variable Types from a Data Frame
 }
 \description{
-'varClass' returns the variable types of a dataframe. It is used
-internally in several functions of the 'missForest'-package.
+  \code{varClass} returns the variable types of a data frame. It is used
+  internally in several functions of the \pkg{missForest} package.
 }
 \usage{
 varClass(x)
 }
 \arguments{
-  \item{x}{data frame with variables in the columns.
-}
+  \item{x}{A data frame with variables in the columns.}
 }
 \value{
-a vector of length p where p denotes the number of columns in 'x'. The
-entries are "numeric" for continuous variables and "factor" for
-categorical variables.
+  A character vector of length \eqn{p}, where \eqn{p} is the number of columns in \code{x}.
+  Entries are \code{"numeric"} for continuous variables and \code{"factor"} for categorical variables.
 }
 \author{
-Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
+  \packageAuthor{missForest}
 }
 \note{
-This function is internally used by \code{\link{missForest}} and \code{\link{mixError}}.
+  This function is used internally by \code{\link{missForest}} and \code{\link{mixError}}.
 }
 \seealso{
-\code{\link{missForest}}, \code{\link{mixError}}, \code{\link{nrmse}}
+  \code{\link{missForest}}, \code{\link{mixError}}, \code{\link{nrmse}}
 }
 \examples{
 data(iris)
@@ -34,4 +32,4 @@ varClass(iris)
 
 ## We have four continuous and one categorical variable.
 }
-\keyword{ classes }
+\keyword{classes}
