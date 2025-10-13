@@ -198,21 +198,33 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                           if (length(summarY) == 1){ oerr <- 0; misY <- factor(rep(names(summarY), length(which(misi)))) }
                                           else {
                                             use_prob <- !is.null(cutoff) && !is.null(cutoff[[varInd]])
-                                            RF <- ranger::ranger(... probability = use_prob, ...)
+                                            RF <- ranger::ranger(
+                                              x = obsX, y = obsY,
+                                              num.trees = ntree, mtry = mtry, replace = replace,
+                                              sample.fraction = sf,
+                                              class.weights = if (!is.null(classwt)) classwt[[varInd]] else NULL,
+                                              min.bucket = if (!is.null(nodesize)) nodesize[2] else 5,  # or 1 if you keep your new default
+                                              write.forest = TRUE, oob.error = TRUE, probability = use_prob,
+                                              respect.unordered.factors = "order",
+                                              num.threads = if (!is.null(num.threads)) num.threads else if (parallelize == 'forests') foreach::getDoParWorkers() else NULL,
+                                              verbose = FALSE
+                                            )
+                                            
                                             if (use_prob) {
                                               # compute OOB misclass rate ourselves (ranger gives Brier for probability forests)
-                                               probs_oob <- ranger::predict(RF)$predictions
-                                               lev <- colnames(probs_oob)
-                                               co <- cutoff[[varInd]]; if (is.null(names(co))) names(co) <- lev; co <- co[lev]
-                                               cls_oob <- factor(lev[max.col(sweep(probs_oob, 2, co, "/"), ties.method = "first")], levels = lev)
-                                               oerr <- mean(cls_oob != obsY)
-                                               probs <- ranger::predict(RF, data = misX)$predictions
-                                               idxc <- max.col(sweep(probs, 2, co, "/"), ties.method = "first")
-                                               misY <- factor(lev[idxc], levels = lev)
-                                               } else {
-                                               oerr <- RF$prediction.error
-                                               misY <- ranger::predict(RF, data = misX)$predictions
-                                               }
+                                              probs_oob <- ranger::predict(RF)$predictions  # OOB probs on training by default
+                                              lev <- colnames(probs_oob)
+                                              co <- cutoff[[varInd]]; if (is.null(names(co))) names(co) <- lev; co <- co[lev]
+                                              cls_oob <- factor(lev[max.col(sweep(probs_oob, 2, co, "/"), ties.method = "first")], levels = lev)
+                                              OOBerror[varInd] <- mean(cls_oob != obsY)
+                                              
+                                              probs <- ranger::predict(RF, data = misX)$predictions
+                                              idxc <- max.col(sweep(probs, 2, co, "/"), ties.method = "first")
+                                              misY <- factor(lev[idxc], levels = lev)
+                                            } else {
+                                              OOBerror[varInd] <- RF$prediction.error
+                                              misY <- ranger::predict(RF, data = misX)$predictions
+                                            }
                                           }
                                         }
                                       } else {
