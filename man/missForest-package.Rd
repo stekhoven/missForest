@@ -2,35 +2,32 @@
 \alias{missForest-package}
 \docType{package}
 \title{
-Nonparametric Missing Value Imputation using Random Forest
+Nonparametric Missing Value Imputation using Random Forest (ranger by default)
 }
 \description{
-  'missForest' is used to impute missing values particularly in the case
-  of mixed-type data. It can be used to impute continuous and/or
-  categorical data including complex interactions and nonlinear
-  relations. It yields an out-of-bag (OOB) imputation error estimate. 
-  Moreover, it can be run parallel to save computation time.
+The \pkg{missForest} package provides nonparametric missing-value imputation for mixed-type data (continuous and categorical). It models each variable with missingness using random forests that learn complex interactions and nonlinear relations and returns out-of-bag (OOB) error estimates. The default backend is \pkg{ranger} for speed and scalability, with an optional legacy \pkg{randomForest} backend for backward compatibility. Parallelization is supported either across variables (via \pkg{foreach}/\pkg{doRNG}) or within forests (via \pkg{ranger} threads).
 }
 \details{
 \tabular{ll}{
 Package: \tab missForest\cr
 Type: \tab Package\cr
-Version: \tab 1.4\cr
-Date: \tab 2013-12-31\cr
+Version: \tab 1.6\cr
+Date: \tab 2025-10-13\cr
 License: \tab GPL (>= 2)\cr
-LazyLoad: \tab yes\cr
 }
-The main function of the package is \code{\link{missForest}} implementing the
-nonparametric missing value imputation. See \code{\link{missForest}} for more
-details.
+
+The main function is \code{\link{missForest}}, which iteratively imputes missing entries by fitting per-variable random forests to the currently imputed data matrix. The implementation now defaults to a \pkg{ranger}-based backend while preserving the original \pkg{randomForest}-based behavior via the \code{backend} argument. See \code{\link{missForest}} for arguments, details on stopping criteria, OOB error reporting (NRMSE for numeric variables and PFC for factors), and parallel options.
 }
 \author{
-  Daniel J. Stekhoven, \email{stekhoven@stat.math.ethz.ch}
+\packageAuthor{missForest}
 }
-\references{Stekhoven, D.J. and Buehlmann, P. (2012), 'MissForest -
-  nonparametric missing value imputation for mixed-type data',
-  Bioinformatics, 28(1) 2012, 112-118, doi: 10.1093/bioinformatics/btr597}
-\keyword{ package }
-\keyword{ nonparametric }
-\keyword{ classes }
-\keyword{ NA }
+\references{
+\insertRef{StekhovenBuehlmann2012}{missForest}
+}
+\seealso{
+\code{\link{missForest}}, \code{\link{mixError}}, \code{\link{prodNA}}
+}
+\keyword{package}
+\keyword{nonparametric}
+\keyword{classes}
+\keyword{NA}

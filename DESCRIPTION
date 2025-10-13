@@ -9,7 +9,7 @@ Authors@R: c(
            email = "stekhoven@nexus.ethz.ch",
            role = c("aut", "cre"))
 )
-Maintainer: Daniel J. Stekhoven <stekhoven@stat.math.ethz.ch>
+Maintainer: Daniel J. Stekhoven <stekhoven@nexus.ethz.ch>
 Description: The function 'missForest' is used to impute missing values
     in mixed-type data. It uses random forests trained on the observed
     values of a data matrix to predict the missing values. It can impute
@@ -22,12 +22,7 @@ Description: The function 'missForest' is used to impute missing values
 License: GPL (>= 2)
 URL: https://www.r-project.org, https://github.com/stekhoven/missForest
 BugReports: https://github.com/stekhoven/missForest/issues
-Imports:
-    ranger,
-    randomForest,
-    foreach,
-    iterators,
-    doRNG
-Suggests:
-    doParallel
+Imports: Rdpack (>= 2.5), randomForest, ranger, foreach, itertools, iterators, doRNG
+RdMacros: Rdpack
+Suggests: doParallel
 Encoding: UTF-8

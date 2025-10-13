@@ -76,7 +76,7 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     \emph{first} entry for \strong{numeric} variables, \emph{second} for
     \strong{factor} variables. \strong{Default:} \code{c(5, 1)}.
     With backend \code{"ranger"}, this maps to \code{min.bucket} (no exact
-    1:1 to randomForest's terminal-node semantics).
+    1:1 mapping to \pkg{randomForest}'s terminal-node semantics).
   }
   \item{maxnodes}{
     Maximum number of terminal nodes per tree. Used with backend
@@ -128,7 +128,7 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     \item \code{ntree} $\rightarrow$ \code{num.trees}
     \item \code{nodesize} (numeric/factor) $\rightarrow$ \code{min.bucket}
           for regression/classification, respectively (defaults used here are
-          \code{c(5,1)}).
+          \code{c(5, 1)}).
     \item \code{sampsize} (counts) $\rightarrow$ \code{sample.fraction}
           (overall or per-class fractions).
     \item \code{classwt} $\rightarrow$ \code{class.weights}.
@@ -169,12 +169,10 @@ missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   }
 }
 \references{
-Stekhoven, D. J. and Bühlmann, P. (2012).
-MissForest—nonparametric missing value imputation for mixed-type data.
-\emph{Bioinformatics}, 28(1), 112–118. \doi{10.1093/bioinformatics/btr597}
+\insertRef{StekhovenBuehlmann2012}{missForest}
 }
 \author{
-Daniel J. Stekhoven, \email{stekhoven@stat.math.ethz.ch}
+\packageAuthor{missForest}
 }
 \seealso{
   \code{\link{mixError}}, \code{\link{prodNA}},

@@ -22,7 +22,7 @@
 ## Dependencies (Imports): ranger, randomForest, foreach, doRNG, iterators
 ##############################################################################
 
-missForest <- function(xmis,
+missForest_new <- function(xmis,
                        maxiter = 10,
                        ntree = 100,
                        variablewise = FALSE,
@@ -257,7 +257,7 @@ missForest <- function(xmis,
                                                 FALSE
                                             )
                                             oerr <- RF$prediction.error
-                                            misY <- ranger::predict(RF, data = misX)$predictions
+                                            misY <- predict(RF, data = misX)$predictions
                                           } else {
                                             obsY <- factor(obsY)
                                             summarY <- summary(obsY)
@@ -293,7 +293,7 @@ missForest <- function(xmis,
                                               )
                                               
                                               if (use_prob) {
-                                                probs_oob <- ranger::predict(RF)$predictions  # OOB on training by default
+                                                probs_oob <- predict(RF)$predictions  # OOB on training by default
                                                 lev <- colnames(probs_oob)
                                                 co <- cutoff[[varInd]]
                                                 if (is.null(names(co)))
@@ -302,12 +302,12 @@ missForest <- function(xmis,
                                                 cls_oob <- factor(lev[max.col(sweep(probs_oob, 2, co, "/"), ties.method = "first")], levels = lev)
                                                 oerr <- mean(cls_oob != obsY)
                                                 
-                                                probs <- ranger::predict(RF, data = misX)$predictions
+                                                probs <- predict(RF, data = misX)$predictions
                                                 idxc <- max.col(sweep(probs, 2, co, "/"), ties.method = "first")
                                                 misY <- factor(lev[idxc], levels = lev)
                                               } else {
                                                 oerr <- RF$prediction.error
-                                                misY <- ranger::predict(RF, data = misX)$predictions
+                                                misY <- predict(RF, data = misX)$predictions
                                               }
                                             }
                                           }
@@ -444,7 +444,7 @@ missForest <- function(xmis,
               verbose = FALSE
             )
             OOBerror[varInd] <- RF$prediction.error
-            misY <- ranger::predict(RF, data = misX)$predictions
+            misY <- predict(RF, data = misX)$predictions
           } else {
             obsY <- factor(obsY)
             summarY <- summary(obsY)
@@ -484,7 +484,7 @@ missForest <- function(xmis,
               )
               
               if (use_prob) {
-                probs_oob <- ranger::predict(RF)$predictions
+                probs_oob <- predict(RF)$predictions
                 lev <- colnames(probs_oob)
                 co <- cutoff[[varInd]]
                 if (is.null(names(co)))
@@ -493,12 +493,12 @@ missForest <- function(xmis,
                 cls_oob <- factor(lev[max.col(sweep(probs_oob, 2, co, "/"), ties.method = "first")], levels = lev)
                 OOBerror[varInd] <- mean(cls_oob != obsY)
                 
-                probs <- ranger::predict(RF, data = misX)$predictions
+                probs <- predict(RF, data = misX)$predictions
                 idxc <- max.col(sweep(probs, 2, co, "/"), ties.method = "first")
                 misY <- factor(lev[idxc], levels = lev)
               } else {
                 OOBerror[varInd] <- RF$prediction.error
-                misY <- ranger::predict(RF, data = misX)$predictions
+                misY <- predict(RF, data = misX)$predictions
               }
             }
           }
