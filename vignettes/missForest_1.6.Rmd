@@ -1,0 +1,239 @@
+yaml
+---
+title: "Using the missForest Package"
+author: "Daniel J. Stekhoven"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  pdf_document:
+    number_sections: true
+    toc: true
+fontsize: 11pt
+geometry: margin=2.5cm, top=3cm, bottom=2.5cm
+lang: en
+bibliography: myBib.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{missForest}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.width = 5.33, fig.height = 3, fig.align = "center"
+)
+options(width = 70, prompt = "> ", continue = "+ ")
+```
+
+## Introduction
+
+### What is this document? (And what it isn't!)
+
+This *package vignette* is a practical, application-focused user guide for the R package `missForest`. We’ll walk through the workflow on real datasets, discuss argument choices with a keen eye on **feasibility** and **accuracy**, and keep an occasional smile. Don’t be alarmed by the length — most of it is friendly R output for illustration.
+
+This document is **not** a theoretical primer on the foundations of the algorithm, nor is it a comparative study. For the theory and evaluations, see @stekhoven11.
+
+### The `missForest` algorithm (with ranger by default)
+
+`missForest` is a nonparametric imputation method for basically any kind of tabular data. It handles **mixed types** (numeric + categorical), **nonlinear relations**, **interactions**, and even **high dimensionality** ((p \gg n)). For each variable with missingness, it fits a random forest on the observed part and predicts the missing part, iterating until a stopping rule is met (or `maxiter` says “enough”).
+
+* By default, `missForest()` now uses the **ranger** backend for speed and multithreading.
+* For legacy/compatibility, you can select the classic **randomForest** backend via `backend = "randomForest"`.
+
+The out-of-bag (OOB) error from the backend is transformed into an **imputation error estimate** — one for numeric variables (NRMSE) and one for factors (PFC). This estimate has been shown to be a good proxy of the true error @stekhoven11.
+
+### Installation
+
+From CRAN:
+
+```{r, eval=FALSE}
+install.packages("missForest", dependencies = TRUE)
+```
+
+The default backend (`ranger`) is automatically used if installed; otherwise the package will fall back to `randomForest` if requested.
+
+---
+
+## Missing value imputation with `missForest`
+
+We’ll start with a small walk-through on `iris`, sprinkle in performance hints, and then get fancy with parallelization for big jobs.
+
+### Data for illustrations
+
+* **Iris**: Five variables, one categorical with three levels; base R: `data(iris)` (@anderson35).
+* **Esoph**: Oesophageal cancer case-control study; base R: `data(esoph)` (@breslow80).
+* **Musk**: A larger, high-dimensional example used only for *timing* demonstrations. Because CRAN machines shouldn’t fetch the internet, the chunks here are `eval = FALSE`. See @UCI10 for details.
+
+### `missForest` in a nutshell
+
+Load the package:
+
+```{r}
+library(missForest)
+```
+
+Create 10% missing values completely at random (not a lifestyle choice we endorse, but very educational):
+
+```{r}
+set.seed(81)
+data(iris)
+iris.mis <- prodNA(iris, noNA = 0.1)
+summary(iris.mis)
+```
+
+Impute:
+
+```{r}
+set.seed(81)
+iris.imp <- missForest(iris.mis)  # default backend = "ranger"
+```
+
+The result is a list with:
+
+* `iris.imp$ximp` – the imputed data matrix,
+* `iris.imp$OOBerror` – estimated imputation error(s).
+
+A common gotcha (we’ve all done it): use **`iris.imp$ximp`** (not `iris.imp`) in subsequent analyses.
+
+```{r}
+iris.imp$OOBerror
+```
+
+Because `iris` has both numeric and categorical variables, you see two numbers: **NRMSE** (numeric) and **PFC** (factors). Both are better when closer to **0**.
+
+If you prefer per-variable diagnostics (for that post-imputation feature selection debate), use `variablewise = TRUE`:
+
+```{r}
+imp_var <- missForest(iris.mis, variablewise = TRUE)
+imp_var$OOBerror
+```
+
+### Additional iteration output with `verbose = TRUE`
+
+Want to watch it think? Switch on diagnostics:
+
+```{r}
+set.seed(81)
+imp_verbose <- missForest(iris.mis, verbose = TRUE)
+imp_verbose$OOBerror
+```
+
+You’ll see **estimated error(s)**, **difference(s)** between iterations, and **time** per iteration. When differences increase (by type), the algorithm returns the **previous** iteration’s imputation.
+
+### Changing the number of iterations: `maxiter`
+
+Sometimes the stopping rule is slow to trigger (data are complicated; it happens). You can guard time with `maxiter`, or deliberately pick an earlier iteration.
+
+```{r}
+set.seed(96)
+data(esoph)
+esoph.mis <- prodNA(esoph, noNA = 0.05)
+esoph.imp <- missForest(esoph.mis, verbose = TRUE, maxiter = 6)
+esoph.imp$OOBerror
+```
+
+### Speed/accuracy trade-off: `ntree` and `mtry`
+
+* `ntree` scales **linearly** with time. Defaults to 100; values in the tens often work well.
+* `mtry = floor(sqrt(p))` is a robust default, but tuning can pay off on complex data.
+
+**Demonstration on a bigger matrix (timings only):**
+
+```{r, eval=FALSE}
+# musk <- ...  # (not fetched during CRAN build)
+# musk.mis <- prodNA(musk, 0.05)
+# missForest(musk.mis, verbose = TRUE, maxiter = 3, ntree = 100)
+# missForest(musk.mis, verbose = TRUE, maxiter = 3, ntree = 20)
+```
+
+As you might guess, fewer trees → fewer minutes, at a modest cost in error.
+
+### Subsampling instead of bootstrapping: `replace = FALSE`
+
+If you set `replace = FALSE`, the sampler uses about `0.632 * n` observations (otherwise OOB would vanish). Sometimes it helps, sometimes not:
+
+```{r}
+set.seed(81)
+imp_sub <- missForest(iris.mis, replace = FALSE, verbose = TRUE)
+imp_sub$OOBerror
+```
+
+### Imbalanced data & sampling controls: `classwt`, `cutoff`, `strata`, `sampsize`
+
+These let you focus the classifier for factor variables (and sampling for both types). Each is a **list with one entry per variable** (use `NULL`/`1` where not applicable). *A quick note on backends:* For this cutoff example we explicitly use the legacy `randomForest` backend. The default `ranger` backend handles cutoffs by fitting a probability forest and then post-thresholding, but its `predict()` method requires passing the training data for non-quantile prediction, and a faithful OOB probability–based estimate is more involved to reproduce in a vignette. The `randomForest` backend natively supports per-class cutoffs and gives a clean, portable example the reader can run without extra plumbing.
+
+
+```{r}
+# Per-variable samples: numeric use single integers; factors need a vector per class
+iris.sampsize <- list(12, 12, 12, 12, c(10, 15, 10))
+imp_ss <- missForest(iris.mis, sampsize = iris.sampsize)
+
+# Per-class cutoffs (factor only). With ranger backend, cutoffs are emulated via probability forests.
+iris.cutoff <- list(1, 1, 1, 1, c(0.3, 0.6, 0.1))
+imp_co <- missForest(iris.mis, cutoff = iris.cutoff, backend = "randomForest")
+
+# Class weights (factor only)
+iris.classwt <- list(NULL, NULL, NULL, NULL, c(10, 30, 20))
+imp_cw <- missForest(iris.mis, classwt = iris.classwt)
+```
+
+### Tree shape controls: `nodesize` and `maxnodes`
+
+* `nodesize` is a length-2 vector: **first** for numeric, **second** for factors.
+  Our package defaults: `c(5, 1)` (yes: numeric=5, factor=1).
+* With `backend = "ranger"`, `nodesize` maps to `min.bucket`; `maxnodes` is ignored (consider ranger’s `max.depth` if needed).
+* With `backend = "randomForest"`, both behave as in `randomForest`.
+
+```{r}
+imp_nodes <- missForest(iris.mis, nodesize = c(5, 1))
+```
+
+### Benchmarking with a complete matrix: `xtrue` and `mixError`
+
+If you have a ground truth (or simulate one), supply `xtrue` to log the **true** error per iteration. The return value then includes `$error`.
+
+```{r}
+set.seed(81)
+imp_bench <- missForest(iris.mis, xtrue = iris, verbose = TRUE)
+imp_bench$error
+
+# Or compute it later:
+err_manual <- mixError(imp_bench$ximp, iris.mis, iris)
+err_manual
+```
+
+### Parallelization: `parallelize` and `num.threads`
+
+We offer two modes:
+
+1. `parallelize = "variables"`
+   Different variables are imputed in parallel using a registered `foreach` backend.
+   To avoid nested oversubscription, per-variable **ranger** calls use `num.threads = 1` internally.
+
+2. `parallelize = "forests"`
+   A single variable’s forest is built with **ranger** multithreading (set `num.threads`) or, with **randomForest**, by combining sub-forests via `foreach`.
+
+Register a backend first (example with `doParallel`):
+
+```{r, eval=FALSE}
+library(doParallel)
+registerDoParallel(2)
+# Variables mode
+imp_vars <- missForest(iris.mis, parallelize = "variables", verbose = TRUE)
+
+# Forests mode (ranger threading)
+imp_fors <- missForest(iris.mis, parallelize = "forests", verbose = TRUE, num.threads = 2)
+```
+
+> Which one is faster? It depends on your data and machine. Try both when in doubt (and coffee is brewing).
+
+---
+
+## Concluding remarks
+
+Imputation with `missForest` is straightforward, and OOB errors help you judge quality at a glance. Do remember: imputation does **not** add information; it helps retain partially observed rows for downstream analyses that prefer complete cases. For broader perspectives, see @schafer97 and @little87.
+
+We thank Steve Weston for contributions regarding parallel computation ideas and tools in the R ecosystem.
+
+## References
