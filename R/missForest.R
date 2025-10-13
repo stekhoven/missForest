@@ -22,7 +22,7 @@
 ## Dependencies (Imports): ranger, randomForest, foreach, doRNG, iterators
 ##############################################################################
 
-missForest_new <- function(xmis,
+missForest <- function(xmis,
                        maxiter = 10,
                        ntree = 100,
                        variablewise = FALSE,
