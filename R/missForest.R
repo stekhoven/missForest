@@ -222,9 +222,25 @@ missForest <- function(xmis,
                                         obsi <- !NAloc[, varInd]
                                         misi <- NAloc[, varInd]
                                         obsY <- ximp[obsi, varInd]
-                                        obsX <- ximp[obsi, seq_len(p)[-varInd]]
-                                        misX <- ximp[misi, seq_len(p)[-varInd]]
+                                        obsX <- ximp[obsi, seq_len(p)[-varInd], drop = FALSE]
+                                        misX <- ximp[misi, seq_len(p)[-varInd], drop = FALSE]
                                         typeY <- varType[varInd]
+                                        
+                                        # zero-covariate fallback
+                                        if (ncol(obsX) == 0L) {
+                                          if (typeY == 'numeric') {
+                                            misY <- rep(mean(obsY, na.rm = TRUE), sum(misi))
+                                            OOBerror[varInd] <- 0
+                                          } else {
+                                            obsYf <- factor(obsY)
+                                            tab <- table(obsYf)
+                                            mode_class <- names(tab)[which.max(tab)]
+                                            misY <- factor(rep(mode_class, sum(misi)), levels = levels(obsYf))
+                                            OOBerror[varInd] <- 0
+                                          }
+                                          ximp[misi, varInd] <- misY
+                                          next
+                                        }
                                         
                                         if (backend == 'ranger') {
                                           ## ranger path
@@ -415,9 +431,25 @@ missForest <- function(xmis,
         obsi <- !NAloc[, varInd]
         misi <- NAloc[, varInd]
         obsY <- ximp[obsi, varInd]
-        obsX <- ximp[obsi, seq_len(p)[-varInd]]
-        misX <- ximp[misi, seq_len(p)[-varInd]]
+        obsX <- ximp[obsi, seq_len(p)[-varInd], drop = FALSE]
+        misX <- ximp[misi, seq_len(p)[-varInd], drop = FALSE]
         typeY <- varType[varInd]
+        
+        # zero-covariate fallback
+        if (ncol(obsX) == 0L) {
+          if (typeY == 'numeric') {
+            misY <- rep(mean(obsY, na.rm = TRUE), sum(misi))
+            OOBerror[varInd] <- 0
+          } else {
+            obsYf <- factor(obsY)
+            tab <- table(obsYf)
+            mode_class <- names(tab)[which.max(tab)]
+            misY <- factor(rep(mode_class, sum(misi)), levels = levels(obsYf))
+            OOBerror[varInd] <- 0
+          }
+          ximp[misi, varInd] <- misY
+          next
+        }
         
         if (backend == 'ranger') {
           sf <- .sample_fraction(
