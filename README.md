@@ -1,5 +1,16 @@
 # missForest
 
+<!-- badges: start -->
+
+[![CRAN status](https://www.r-pkg.org/badges/version/missForest)](https://CRAN.R-project.org/package=missForest)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/last-month/missForest?color=blue)](https://r-pkg.org/pkg/missForest)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/missForest?color=blue)](https://r-pkg.org/pkg/missForest)
+[![R-CMD-check](https://github.com/stekhoven/missForest/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/stekhoven/missForest/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/stekhoven/missForest/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/stekhoven/missForest/actions/workflows/test-coverage.yaml)
+[![License: GPL (≥ 2)](https://img.shields.io/badge/license-GPL%20(%E2%89%A5%202)-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
+<!-- badges: end -->
+
 **missForest** is a nonparametric imputation method for **mixed-type** tabular data in R. It handles **numeric and categorical** variables simultaneously by iteratively training random forests to predict missing entries from the observed ones. No explicit modeling assumptions, no matrix factorizations—just strong predictive baselines that work well out of the box.
 
 * Works with **any mix of numeric and factor columns**
