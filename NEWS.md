@@ -1,5 +1,20 @@
 # missForest NEWS
 
+## missForest 1.6.1 (2025-10-22)
+
+**Fixes and robustness improvements**
+
+* Fixed a parallelization edge case in `parallelize = "variables"` mode where empty index chunks could lead to uninitialized results.
+* Added defensive guards (`tryCatch`, zero-length handling) to prevent “object 'results' not found” errors during variable-level parallel imputation.
+* Improved handling of edge cases with few or single predictors (zero-covariate fallback).
+* Introduced automatic worker capping to prevent errors when the number of parallel cores exceeds the number of variables.
+* Enhanced internal stability for both `ranger` and `randomForest` backends in low-dimensional or degenerate datasets.
+* Expanded the internal test suite with ADAPTS-like stress tests covering:
+
+  * mixed-type small datasets
+  * single-column and zero-covariate cases
+  * both parallelization modes and backends
+
 ## 1.6 — 2025-10-13
 
 ### Added

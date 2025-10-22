@@ -1,7 +1,7 @@
 Package: missForest
 Type: Package
 Title: Nonparametric Missing Value Imputation using Random Forest
-Version: 1.6
+Version: 1.6.1
 Date: 2025-10-13
 Authors@R: 
     c(person(given = c("Daniel","J."),
