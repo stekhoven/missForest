@@ -165,6 +165,6 @@ GPL (≥ 2)
 
 ## Contact
 
-Daniel J. Stekhoven — [stekhoven@stat.math.ethz.ch](mailto:stekhoven@nexus.ethz.ch)
+Daniel J. Stekhoven — [stekhoven@nexus.ethz.ch](mailto:stekhoven@nexus.ethz.ch)
 
 ---
